@@ -1,1 +1,50 @@
-C:\MLOPS\MLOPS_PROJECTS\mlops_flight_delay_prediction\delay_data\flights.csv
+# Data files
+delay_data/flights.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+
+# ML artifacts
+*.pkl
+*.h5
+*.pth
+*.onnx
+models/
+checkpoints/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
