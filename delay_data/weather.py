@@ -1,8 +1,11 @@
 import requests
 import pandas as pd
+from dotenv import load_dotenv
+import os
 #  get tocken form here https://www.ncdc.noaa.gov/cdo-web/token
 
-API_KEY = "YOUR_API_KEY"
+load_dotenv()
+API_KEY = os.getenv("NOAA_API_KEY")
 
 def get_weather(station="GHCND:USW00094728", start="2015-01-01", end="2015-01-05"):
     url = "https://www.ncdc.noaa.gov/cdo-web/api/v2/data"

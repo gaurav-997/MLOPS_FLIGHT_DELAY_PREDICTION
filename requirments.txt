@@ -1,0 +1,27 @@
+# Core ML libraries
+numpy
+pandas
+scikit-learn
+scipy
+
+# MLOps tools
+mlflow
+dvc
+dagshub
+
+# Web Framework & API
+fastapi
+uvicorn[standard]
+python-multipart
+jinja2
+
+# Monitoring & Observability
+prometheus_client
+
+# AWS S3 storage for model artifacts
+boto3
+s3fs
+
+# Other dependencies
+pyyaml
+python-dotenv
