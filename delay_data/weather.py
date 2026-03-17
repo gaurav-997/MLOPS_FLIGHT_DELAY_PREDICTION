@@ -7,7 +7,7 @@ import os
 load_dotenv()
 API_KEY = os.getenv("NOAA_API_KEY")
 
-def get_weather(station="GHCND:USW00094728", start="2015-01-01", end="2015-01-05"):
+def get_weather(station="GHCND:USW00094728", start="2015-01-01", end="2015-01-12"):
     url = "https://www.ncdc.noaa.gov/cdo-web/api/v2/data"
 
     headers = {
@@ -33,4 +33,5 @@ def get_weather(station="GHCND:USW00094728", start="2015-01-01", end="2015-01-05
 
 if __name__ == "__main__":
     df = get_weather()
+    df.to_csv("weather_data.csv", index=False)
     print(df.head())

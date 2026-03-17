@@ -61,6 +61,17 @@ Expected Resume Impact:
    └─ Virtual environment
 
 # Read → Validate → Clean → Join → Feature → Train
+# flights
+   ↓
++ airlines
+   ↓
++ airports
+   ↓
++ holidays
+   ↓
++ weather
+   ↓
+final_dataset.csv
 
 # 2. Data Exploration & Profiling
     flights.csv        ✅ MAIN dataset

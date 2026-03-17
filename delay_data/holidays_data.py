@@ -17,5 +17,6 @@ def get_holidays(years=[2015]):
 
 
 if __name__ == "__main__":
-    df = get_holidays([2023])
-    print(df.head())
+    df = get_holidays([2015])
+    df.to_csv("holidays.csv", index=False)
+    print(df)
