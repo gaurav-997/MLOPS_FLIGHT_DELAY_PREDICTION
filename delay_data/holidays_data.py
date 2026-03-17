@@ -7,7 +7,7 @@ def get_holidays(years=[2015]):
     data = []
     for date, name in us_holidays.items():
         data.append({
-            "date": pd.to_datetime(date),
+            "date": pd.to_datetime(date).date(),
             "holiday_name": name,
             "is_holiday": 1
         })
