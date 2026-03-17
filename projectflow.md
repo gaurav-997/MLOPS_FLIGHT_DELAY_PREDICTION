@@ -53,3 +53,42 @@ Expected Resume Impact:
 ✅ Drift detection
 ✅ Automated retraining
 ✅ Production deployment (K8s target)
+
+***************************************************************
+1. Environment Setup
+   └─ Fix API key → .env file
+   └─ Create requirements.txt
+   └─ Virtual environment
+
+2. Data Exploration & Profiling
+   └─ Understand each dataset structure
+   └─ Check data quality (nulls, duplicates, outliers)
+   └─ Profile: pandas-profiling or ydata-profiling
+   └─ Document findings
+
+3. Schema Definition
+   └─ Define expected schemas for each source
+   └─ Create schema validation logic BEFORE ingestion
+   └─ Tools: Pydantic, Great Expectations, or Pandera
+
+4. Data Ingestion Component (flightdelay/components/dataingestion.py)
+   └─ Read from multiple sources
+   └─ Apply schema validation
+   └─ Log validation errors
+   └─ Save raw data to artifacts
+
+5. Data Quality Checks
+   └─ Missing value analysis
+   └─ Data type validation
+   └─ Range checks (dates, coordinates, etc.)
+
+6. Data Joining Logic
+   └─ Simple joins first (airlines, airports)
+   └─ Temporal join (holidays)
+   └─ Complex join (weather - spatio-temporal)
+
+7. Feature Engineering
+   └─ Temporal features: hour, day_of_week, month
+   └─ Derived: is_holiday, is_weekend
+   └─ Aggregations: airport historical delay rates
+   └─ Weather features at origin
