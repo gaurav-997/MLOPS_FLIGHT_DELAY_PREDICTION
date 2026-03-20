@@ -25,3 +25,12 @@ DATA_VALIDATION_VALID_DIR = 'validated'
 DATA_VALIDATION_INVALID_DIR = 'invalidated'
 DATA_DRIFT_REPORT_FILE_NAME = 'drift_report.yaml'
 
+# data transformation constants
+DATA_TRANSFORMATION_DIR_NAME = 'data_transformation'
+DATA_TRANSFORMATION_TRANSFORMED_DATA_DIR = 'transformed'
+DATA_TRANSFORMATION_TRANSFORMED_OBJECT_DIR = 'transformed_object'
+PREPROCESSING_OBJECT_FILE_NAME = 'preprocessor.pkl'
+FINAL_JOINED_DATA_FILE_NAME = 'flights_joined.csv'
+TRANSFORMED_TRAIN_FILE_NAME = 'train.npy'
+TRANSFORMED_TEST_FILE_NAME = 'test.npy'
+

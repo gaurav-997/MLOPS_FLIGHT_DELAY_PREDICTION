@@ -16,3 +16,10 @@ class DataValidationArtifact:
     validated_holidays_dir: str
     validated_weather_dir: str
     data_drift_report_path: str
+
+@dataclass
+class DataTransformationArtifact:
+    transformed_object_file_path: str
+    transformed_train_file_path: str
+    transformed_test_file_path: str
+    joined_data_file_path: str

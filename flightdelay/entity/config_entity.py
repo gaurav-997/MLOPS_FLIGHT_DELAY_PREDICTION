@@ -41,5 +41,19 @@ class DataValidationConfig:
             raise CustomException(e, sys)
 
 
+class DataTransformationConfig:
+    def __init__(self, training_pipeline_config: TrainingPipelineConfig):
+        try:
+            self.data_transformation_dir = os.path.join(training_pipeline_config.artifact_dir, common_constants.DATA_TRANSFORMATION_DIR_NAME)
+            self.transformed_data_dir = os.path.join(self.data_transformation_dir, common_constants.DATA_TRANSFORMATION_TRANSFORMED_DATA_DIR)
+            self.transformed_object_dir = os.path.join(self.data_transformation_dir, common_constants.DATA_TRANSFORMATION_TRANSFORMED_OBJECT_DIR)
+            self.transformed_object_file_path = os.path.join(self.transformed_object_dir, common_constants.PREPROCESSING_OBJECT_FILE_NAME)
+            self.final_joined_data_path = os.path.join(self.data_transformation_dir, common_constants.FINAL_JOINED_DATA_FILE_NAME)
+            self.transformed_train_file_path = os.path.join(self.transformed_data_dir, common_constants.TRANSFORMED_TRAIN_FILE_NAME)
+            self.transformed_test_file_path = os.path.join(self.transformed_data_dir, common_constants.TRANSFORMED_TEST_FILE_NAME)
+        except Exception as e:
+            raise CustomException(e, sys)
+
+
 
 
