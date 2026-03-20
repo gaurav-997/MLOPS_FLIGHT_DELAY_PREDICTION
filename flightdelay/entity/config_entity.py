@@ -29,6 +29,16 @@ class DataIngestionConfig:
 
         except Exception as e:
             raise CustomException(e, sys)
+        
+class DataValidationConfig:
+    def __init__(self,training_pipeline_config: TrainingPipelineConfig):
+        try:
+            self.data_validation_dir = os.path.join(training_pipeline_config.artifact_dir, common_constants.DATA_VALIDATION_DIR_NAME)
+            self.data_validation_valid_dir = os.path.join(self.data_validation_dir, common_constants.DATA_VALIDATION_VALID_DIR)
+            self.data_validation_invalid_dir = os.path.join(self.data_validation_dir, common_constants.DATA_VALIDATION_INVALID_DIR)
+            self.data_drift_report_file_path = os.path.join(self.data_validation_dir, common_constants.DATA_DRIFT_REPORT_FILE_NAME)
+        except Exception as e:
+            raise CustomException(e, sys)
 
 
 

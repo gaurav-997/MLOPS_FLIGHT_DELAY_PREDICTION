@@ -129,7 +129,7 @@ final_dataset.csv
    ✔ test_data_ingestion.py - Test ingestion flow
    ✔ DataIngestionArtifact - Returns paths to all ingested files
 
-# 5. Data Validation Component
+# 5. Data Validation Component ( check on required columns that we choosen in schmea validation)
    └─ Detect data drift (compare ingested data vs baseline)
    └─ Validate data quality (missing values, outliers, invalid ranges)
    └─ Generate drift report (JSON/HTML)
