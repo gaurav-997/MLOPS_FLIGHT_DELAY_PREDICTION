@@ -55,6 +55,20 @@ Expected Resume Impact:
 ✅ Production deployment (K8s target)
 
 ***************************************************************
+
+. Add ONE thing to make it elite
+
+👉 Add Feature Store concept (even basic)
+
+Even simple:
+
+store features in parquet / redis
+
+reuse during inference
+
+👉 This will push you into top-tier MLOps
+
+
 1. Environment Setup
    └─ Fix API key → .env file
    └─ Create requirements.txt
