@@ -2,6 +2,8 @@
 numpy
 pandas
 scikit-learn
+xgboost
+lightgbm
 scipy
 holidays
 dill
@@ -27,3 +29,5 @@ s3fs
 # Other dependencies
 pyyaml
 python-dotenv
+xgboost
+lightgbm

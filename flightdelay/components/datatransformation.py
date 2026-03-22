@@ -20,6 +20,7 @@ from flightdelay.entity.config_entity import DataTransformationConfig
 from flightdelay.entity.artifact_entity import DataValidationArtifact, DataTransformationArtifact
 from flightdelay.constant import common_constants
 from flightdelay.utils.main_utils import save_object, save_numpy_array_data
+from flightdelay.components.feature_engineering import FeatureEngineering
 
 
 class DataTransformation:
@@ -235,18 +236,27 @@ class DataTransformation:
         try:
             logger.info("Creating preprocessing pipeline...")
             
-            # Define numerical columns
+            # Define numerical columns (original + engineered)
             numerical_cols = [
-                'DISTANCE', 'SCHEDULED_TIME', 'ELAPSED_TIME', 
+                # Original numerical features
+                'YEAR', 'DISTANCE', 'SCHEDULED_TIME', 'ELAPSED_TIME', 
                 'ORIGIN_LAT', 'ORIGIN_LON', 'DEST_LAT', 'DEST_LON',
                 'TMAX', 'TMIN', 'PRCP', 'AWND',
-                'DEPARTURE_DELAY'  # Feature for prediction
+                'DEPARTURE_DELAY',
+                # Engineered numerical features
+                'HOUR', 'IS_WEEKEND', 'QUARTER', 'IS_HOLIDAY',
+                'DURATION_RATIO', 'TEMP_RANGE',
+                'EXTREME_COLD', 'EXTREME_HOT', 'HEAVY_RAIN', 'HIGH_WIND',
+                # Historical aggregation features
+                'ORIGIN_AVG_DELAY', 'ORIGIN_DELAY_STD', 'ORIGIN_DELAY_RATE',
+                'AIRLINE_AVG_DELAY', 'AIRLINE_DELAY_RATE', 'ROUTE_AVG_DELAY'
             ]
             
             # Define categorical columns
             categorical_cols = [
                 'AIRLINE', 'ORIGIN_AIRPORT', 'DESTINATION_AIRPORT',
-                'DAY_OF_WEEK', 'MONTH'
+                'DAY_OF_WEEK', 'MONTH', 'DAY',
+                'DISTANCE_BIN', 'ROUTE'  # Engineered categorical features
             ]
             
             logger.info(f"  Numerical features: {len(numerical_cols)} columns")
@@ -281,20 +291,28 @@ class DataTransformation:
         try:
             logger.info("Preparing features and target...")
             
-            # Define feature columns to keep
+            # Define feature columns to keep (including engineered features)
             feature_cols = [
-                # Time features
+                # Time features (original)
                 'YEAR', 'MONTH', 'DAY', 'DAY_OF_WEEK',
+                # Temporal features (engineered)
+                'HOUR', 'IS_WEEKEND', 'QUARTER',
                 # Flight identifiers
                 'AIRLINE', 'ORIGIN_AIRPORT', 'DESTINATION_AIRPORT',
                 # Flight metrics
                 'DISTANCE', 'SCHEDULED_TIME', 'ELAPSED_TIME', 'DEPARTURE_DELAY',
+                # Derived features
+                'IS_HOLIDAY', 'DURATION_RATIO', 'DISTANCE_BIN',
                 # Geographic features
                 'ORIGIN_LAT', 'ORIGIN_LON', 'DEST_LAT', 'DEST_LON',
-                # Weather features
+                # Weather features (original)
                 'TMAX', 'TMIN', 'PRCP', 'AWND',
-                # Holiday feature
-                'is_holiday'
+                # Weather features (engineered)
+                'TEMP_RANGE', 'EXTREME_COLD', 'EXTREME_HOT', 'HEAVY_RAIN', 'HIGH_WIND',
+                # Historical aggregation features
+                'ORIGIN_AVG_DELAY', 'ORIGIN_DELAY_STD', 'ORIGIN_DELAY_RATE',
+                'AIRLINE_AVG_DELAY', 'AIRLINE_DELAY_RATE',
+                'ROUTE_AVG_DELAY', 'ROUTE'
             ]
             
             # Filter to available columns
@@ -331,37 +349,43 @@ class DataTransformation:
             os.makedirs(self.data_transformation_config.transformed_object_dir, exist_ok=True)
             
             # Step 1: Load validated data
-            print("\n[Step 1/7] Loading validated data...")
+            print("\n[Step 1/8] Loading validated data...")
             flights_df, airports_df, airlines_df, holidays_df, weather_df = self.load_validated_data()
             print("  [PASS] Validated data loaded")
             
             # Step 2: Simple joins (airlines + airports)
-            print("\n[Step 2/7] Performing simple joins...")
+            print("\n[Step 2/8] Performing simple joins...")
             flights_df = self.join_simple_data(flights_df, airlines_df, airports_df)
             print(f"  [PASS] Simple joins completed: {len(flights_df)} rows")
             
             # Step 3: Temporal join (holidays)
-            print("\n[Step 3/7] Performing temporal join...")
+            print("\n[Step 3/8] Performing temporal join...")
             flights_df = self.join_temporal_data(flights_df, holidays_df)
             print(f"  [PASS] Temporal join completed: {len(flights_df)} rows")
             
             # Step 4: Weather join
-            print("\n[Step 4/7] Performing weather join...")
+            print("\n[Step 4/8] Performing weather join...")
             flights_df = self.join_weather_data(flights_df, weather_df)
             print(f"  [PASS] Weather join completed: {len(flights_df)} rows")
             
             # Step 5: Data cleaning
-            print("\n[Step 5/7] Cleaning joined data...")
+            print("\n[Step 5/8] Cleaning joined data...")
             flights_df = self.clean_joined_data(flights_df)
             print(f"  [PASS] Data cleaning completed: {len(flights_df)} rows")
             
-            # Save joined data
+            # Step 6: Feature Engineering
+            print("\n[Step 6/8] Engineering features...")
+            feature_engineer = FeatureEngineering()
+            flights_df = feature_engineer.engineer_features(flights_df)
+            print(f"  [PASS] Feature engineering completed: {len(flights_df.columns)} total columns")
+            
+            # Save joined data with engineered features
             flights_df.to_csv(self.data_transformation_config.final_joined_data_path, index=False)
             logger.info(f"Joined data saved: {self.data_transformation_config.final_joined_data_path}")
             print(f"  [PASS] Joined data saved: {self.data_transformation_config.final_joined_data_path}")
             
-            # Step 6: Prepare features and target
-            print("\n[Step 6/7] Preparing features and target...")
+            # Step 7: Prepare features and target
+            print("\n[Step 7/8] Preparing features and target...")
             X, y = self.prepare_features_target(flights_df)
             print(f"  [PASS] Features: {X.shape}, Target: {y.shape}")
             
@@ -372,8 +396,8 @@ class DataTransformation:
             logger.info(f"Train-test split: {len(X_train)} train, {len(X_test)} test")
             print(f"  Train: {len(X_train)} | Test: {len(X_test)}")
             
-            # Step 7: Preprocessing pipeline
-            print("\n[Step 7/7] Creating and applying preprocessing pipeline...")
+            # Step 8: Preprocessing pipeline
+            print("\n[Step 8/8] Creating and applying preprocessing pipeline...")
             preprocessor = self.get_preprocessing_pipeline()
             
             # Fit and transform

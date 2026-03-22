@@ -327,7 +327,7 @@ final_dataset.csv
 
 # 7. Feature Engineering Component
    
-   Implementation in datatransformation.py or separate feature_engineering.py:
+   Implementation separate feature_engineering.py:
    
    ✅ Temporal Features:
    ```python

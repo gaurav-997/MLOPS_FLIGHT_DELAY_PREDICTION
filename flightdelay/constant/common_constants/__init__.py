@@ -34,3 +34,10 @@ FINAL_JOINED_DATA_FILE_NAME = 'flights_joined.csv'
 TRANSFORMED_TRAIN_FILE_NAME = 'train.npy'
 TRANSFORMED_TEST_FILE_NAME = 'test.npy'
 
+# model training constants
+MODEL_TRAINER_DIR_NAME = 'model_trainer'
+MODEL_TRAINER_TRAINED_MODEL_DIR = 'trained_model'
+MODEL_TRAINER_TRAINED_MODEL_NAME = 'model.pkl'
+MODEL_TRAINER_EXPECTED_SCORE = 0.6  # Min R² for regression
+MODEL_TRAINER_OVERFITTING_THRESHOLD = 0.1  # Max train-test gap
+

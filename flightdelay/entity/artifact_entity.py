@@ -23,3 +23,18 @@ class DataTransformationArtifact:
     transformed_train_file_path: str
     transformed_test_file_path: str
     joined_data_file_path: str
+
+@dataclass
+class RegressionMetricArtifact:
+    r2_score: float
+    mae: float
+    rmse: float
+    mse: float
+
+@dataclass
+class ModelTrainerArtifact:
+    trained_model_file_path: str
+    train_metric_artifact: RegressionMetricArtifact
+    test_metric_artifact: RegressionMetricArtifact
+    best_model_name: str
+    best_model_score: float
