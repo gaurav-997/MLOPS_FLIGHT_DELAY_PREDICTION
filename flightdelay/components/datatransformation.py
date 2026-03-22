@@ -197,7 +197,7 @@ class DataTransformation:
             
             initial_rows = len(flights_df)
             
-            # Drop rows with missing target variable
+            # Drop rows with missing target variable ( arrival delay)
             flights_df = flights_df.dropna(subset=[common_constants.TARGET_COLUMN])
             after_target_drop = len(flights_df)
             logger.info(f"  Dropped {initial_rows - after_target_drop} rows with missing {common_constants.TARGET_COLUMN}")

@@ -29,6 +29,7 @@ ENV/
 .env.local
 
 # ML artifacts
+artifacts/
 *.pkl
 *.h5
 *.pth
