@@ -67,5 +67,18 @@ class ModelTrainerConfig:
             raise CustomException(e, sys)
 
 
+class ModelEvaluationConfig:
+    def __init__(self, training_pipeline_config: TrainingPipelineConfig):
+        try:
+            self.model_evaluation_dir = os.path.join(training_pipeline_config.artifact_dir, common_constants.MODEL_EVALUATION_DIR_NAME)
+            self.report_file_path = os.path.join(self.model_evaluation_dir, common_constants.MODEL_EVALUATION_REPORT_NAME)
+            self.change_threshold = common_constants.MODEL_EVALUATION_CHANGED_THRESHOLD
+            self.best_model_dir = common_constants.BEST_MODEL_DIR
+            self.best_model_file_path = os.path.join(self.best_model_dir, common_constants.BEST_MODEL_FILE_NAME)
+            self.best_preprocessor_file_path = os.path.join(self.best_model_dir, common_constants.BEST_PREPROCESSOR_FILE_NAME)
+        except Exception as e:
+            raise CustomException(e, sys)
+
+
 
 

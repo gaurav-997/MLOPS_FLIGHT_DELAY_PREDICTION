@@ -38,3 +38,13 @@ class ModelTrainerArtifact:
     test_metric_artifact: RegressionMetricArtifact
     best_model_name: str
     best_model_score: float
+
+@dataclass
+class ModelEvaluationArtifact:
+    is_model_accepted: bool
+    improved_score: float
+    best_model_path: str
+    trained_model_path: str
+    train_metric: RegressionMetricArtifact
+    best_model_metric: RegressionMetricArtifact
+    report_file_path: str

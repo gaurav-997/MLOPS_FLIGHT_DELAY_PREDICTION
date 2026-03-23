@@ -484,6 +484,8 @@ final_dataset.csv
    ```
 
 # 9. Model Evaluation Component
+## Overview
+Successfully implemented complete Model Evaluation Component that compares newly trained models with production models and promotes better models.
 
    Constants:
    - MODEL_EVALUATION_DIR_NAME = 'model_evaluation'
@@ -510,31 +512,24 @@ final_dataset.csv
    trained_model = load_object(model_trainer_artifact.trained_model_file_path)
    trained_pred = trained_model.predict(X_test)
    trained_r2 = r2_score(y_test, trained_pred)
+
+   **Key Methods:**
+- `calculate_metrics(y_true, y_pred)` - Calculate R², MAE, RMSE, MSE
+- `evaluate_model(model, X_test, y_test)` - Evaluate a model on test data
+- `save_evaluation_report(...)` - Save evaluation results as YAML
+- `initiate_model_evaluation()` - Main orchestration method
    
-   # Check if production model exists
-   if os.path.exists(best_model_file_path):
-       # Load and evaluate production model
-       production_model = load_object(best_model_file_path)
-       production_pred = production_model.predict(X_test)
-       production_r2 = r2_score(y_test, production_pred)
-       
-       # Compare
-       improvement = trained_r2 - production_r2
-       is_model_accepted = improvement >= change_threshold
-       
-       logger.info(f"Production R²: {production_r2:.3f}, New R²: {trained_r2:.3f}, Improvement: {improvement:.3f}")
-   else:
-       # No production model, accept first model
-       is_model_accepted = True
-       improvement = trained_r2
-       logger.info("No production model found, accepting trained model")
-   
-   # Save best model if accepted
-   if is_model_accepted:
-       save_object(trained_model, best_model_file_path)
-       save_object(preprocessor, os.path.join(BEST_MODEL_DIR, 'preprocessor.pkl'))
-   
-   return ModelEvaluationArtifact(...)
+  **Workflow:**
+1. Load test data from transformation artifact
+2. Load newly trained model
+3. Evaluate trained model on test data
+4. Check if production model exists:
+   - **If exists**: Compare models, accept only if R² improvement >= threshold
+   - **If not exists**: Accept first model automatically
+5. If accepted:
+   - Save model to `final_model/model.pkl`
+   - Save preprocessor to `final_model/preprocessor.pkl`
+6. Generate evaluation report (YAML)
    ```
 
 # 10. Model Pusher Component

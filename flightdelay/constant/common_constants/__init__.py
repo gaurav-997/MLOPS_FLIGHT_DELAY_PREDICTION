@@ -41,3 +41,11 @@ MODEL_TRAINER_TRAINED_MODEL_NAME = 'model.pkl'
 MODEL_TRAINER_EXPECTED_SCORE = 0.6  # Min R² for regression
 MODEL_TRAINER_OVERFITTING_THRESHOLD = 0.1  # Max train-test gap
 
+# model evaluation constants
+MODEL_EVALUATION_DIR_NAME = 'model_evaluation'
+MODEL_EVALUATION_REPORT_NAME = 'report.yaml'
+MODEL_EVALUATION_CHANGED_THRESHOLD = 0.02  # Min R² improvement
+BEST_MODEL_DIR = 'final_model'
+BEST_MODEL_FILE_NAME = 'model.pkl'
+BEST_PREPROCESSOR_FILE_NAME = 'preprocessor.pkl'
+
