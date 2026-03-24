@@ -1,6 +1,0 @@
-[core]
-    remote = origin
-    autostage = true
-
-[remote "origin"]
-    url = https://dagshub.com/${DAGSHUB_USER}/mlops_flight_delay_prediction.dvc
