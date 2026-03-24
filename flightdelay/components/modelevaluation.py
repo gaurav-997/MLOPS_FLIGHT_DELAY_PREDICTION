@@ -13,6 +13,7 @@ from flightdelay.entity.artifact_entity import (
     RegressionMetricArtifact
 )
 from flightdelay.utils.main_utils import load_object, load_numpy_array_data, save_object
+from flightdelay.utils.ml_utils.mlflow_utils import log_model_evaluation, promote_model_to_production, register_model
 
 
 class ModelEvaluation:
@@ -242,7 +243,33 @@ class ModelEvaluation:
                 trained_metrics=trained_metrics,
                 best_model_metrics=best_model_metric
             )
-            
+
+            # Log evaluation results to MLflow and (if accepted) promote to Production
+            run_id = getattr(self.model_trainer_artifact, "mlflow_run_id", None)
+            try:
+                prod_metrics = best_model_metric if os.path.exists(
+                    self.model_evaluation_config.best_model_file_path
+                ) and best_model_metric is not trained_metrics else None
+
+                log_model_evaluation(
+                    run_id=run_id,
+                    is_model_accepted=is_model_accepted,
+                    improvement=improvement,
+                    trained_r2=trained_metrics.r2_score,
+                    trained_mae=trained_metrics.mae,
+                    trained_rmse=trained_metrics.rmse,
+                    production_r2=prod_metrics.r2_score if prod_metrics else None,
+                    production_mae=prod_metrics.mae if prod_metrics else None,
+                    production_rmse=prod_metrics.rmse if prod_metrics else None,
+                )
+
+                if is_model_accepted and run_id:
+                    version = register_model(run_id)
+                    promote_model_to_production(version)
+
+            except Exception as mlflow_err:
+                logger.warning(f"MLflow evaluation logging failed (non-fatal): {mlflow_err}")
+
             # Create artifact
             model_evaluation_artifact = ModelEvaluationArtifact(
                 is_model_accepted=is_model_accepted,

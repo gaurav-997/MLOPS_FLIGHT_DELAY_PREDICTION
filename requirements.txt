@@ -10,7 +10,7 @@ dill
 
 # MLOps tools
 mlflow
-dvc
+dvc[s3]
 dagshub
 
 # Web Framework & API

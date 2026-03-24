@@ -1,0 +1,95 @@
+stages:
+
+  data_ingestion:
+    cmd: >-
+      python -c "
+      from flightdelay.pipeline.training_pipeline import TrainingPipeline;
+      tp = TrainingPipeline();
+      tp.start_data_ingestion()
+      "
+    deps:
+      - delay_data/flights_sample.csv
+      - delay_data/airports.csv
+      - delay_data/airlines.csv
+      - delay_data/holidays.csv
+      - delay_data/weather_data.csv
+      - flightdelay/components/dataingestion.py
+    params:
+      - params.yaml:
+          - data_ingestion
+    outs:
+      - Artifacts/${PIPELINE_RUN_ID}/data_ingestion:
+          persist: true
+
+  data_validation:
+    cmd: >-
+      python -c "
+      from flightdelay.pipeline.training_pipeline import TrainingPipeline;
+      tp = TrainingPipeline();
+      tp.start_data_validation()
+      "
+    deps:
+      - Artifacts/${PIPELINE_RUN_ID}/data_ingestion
+      - flightdelay/components/datavalidation.py
+    params:
+      - params.yaml:
+          - data_validation
+    outs:
+      - Artifacts/${PIPELINE_RUN_ID}/data_validation:
+          persist: true
+
+  data_transformation:
+    cmd: >-
+      python -c "
+      from flightdelay.pipeline.training_pipeline import TrainingPipeline;
+      tp = TrainingPipeline();
+      tp.start_data_transformation()
+      "
+    deps:
+      - Artifacts/${PIPELINE_RUN_ID}/data_validation
+      - flightdelay/components/datatransformation.py
+    params:
+      - params.yaml:
+          - data_transformation
+    outs:
+      - Artifacts/${PIPELINE_RUN_ID}/data_transformation:
+          persist: true
+
+  model_training:
+    cmd: >-
+      python -c "
+      from flightdelay.pipeline.training_pipeline import TrainingPipeline;
+      tp = TrainingPipeline();
+      tp.start_model_training()
+      "
+    deps:
+      - Artifacts/${PIPELINE_RUN_ID}/data_transformation
+      - flightdelay/components/modeltraining.py
+    params:
+      - params.yaml:
+          - model_trainer
+    outs:
+      - Artifacts/${PIPELINE_RUN_ID}/model_trainer:
+          persist: true
+
+  model_evaluation:
+    cmd: >-
+      python -c "
+      from flightdelay.pipeline.training_pipeline import TrainingPipeline;
+      tp = TrainingPipeline();
+      tp.start_model_evaluation()
+      "
+    deps:
+      - Artifacts/${PIPELINE_RUN_ID}/model_trainer
+      - flightdelay/components/modelevaluation.py
+    params:
+      - params.yaml:
+          - model_evaluation
+    metrics:
+      - Artifacts/${PIPELINE_RUN_ID}/model_evaluation/evaluation_report.yaml:
+          cache: false
+    outs:
+      - Artifacts/${PIPELINE_RUN_ID}/model_evaluation:
+          persist: true
+
+  # model_pusher is intentionally omitted (S3 bucket setup pending)
