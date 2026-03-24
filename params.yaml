@@ -1,0 +1,43 @@
+# Pipeline hyperparameters tracked by DVC
+# These are referenced in dvc.yaml via `params:` sections.
+# Update values here to trigger DVC stage re-runs.
+
+data_ingestion:
+  flights_file: delay_data/flights_sample.csv
+  airports_file: delay_data/airports.csv
+  airlines_file: delay_data/airlines.csv
+  holidays_file: delay_data/holidays.csv
+  weather_file: delay_data/weather_data.csv
+
+data_validation:
+  drift_threshold: 0.05
+
+data_transformation:
+  test_size: 0.2
+  random_state: 42
+
+model_trainer:
+  expected_score: 0.6           # Minimum R² to accept model
+  overfitting_threshold: 0.1    # Max allowed train-test R² gap
+  models:
+    random_forest:
+      n_estimators: 50
+      max_depth: 10
+      max_features: sqrt
+    gradient_boosting:
+      n_estimators: 50
+      max_depth: 4
+      learning_rate: 0.1
+    xgboost:
+      n_estimators: 50
+      max_depth: 5
+      learning_rate: 0.1
+    lightgbm:
+      n_estimators: 50
+      max_depth: 5
+      learning_rate: 0.1
+    ridge:
+      alpha: 1.0
+
+model_evaluation:
+  change_threshold: 0.02        # Min R² improvement over production model
