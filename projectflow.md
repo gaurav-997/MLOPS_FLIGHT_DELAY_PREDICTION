@@ -627,57 +627,113 @@ Successfully implemented complete Model Evaluation Component that compares newly
        )
    ```
    
-   ## DVC - Data & Artifact Versioning
-   path - dvc.yaml, .dvc/config
-   
-   Setup:
-   ```bash
-   dvc init
-   dvc remote add origin https://dagshub.com/<user>/mlops_flight_delay_prediction.dvc
+   ## DagsHub - Unified MLOps Hub ✅ DONE
+   Repo: https://dagshub.com/chauhan7gaurav/MLOPS_FLIGHT_DELAY_PREDICTION
+
+   ### STEP A — Create DagsHub repo (manual, one-time)
+   1. Go to https://dagshub.com → Sign in → New Repository
+   2. Name: MLOPS_FLIGHT_DELAY_PREDICTION
+   3. Click "Connect a repo" → Choose GitHub → Select mlops_flight_delay_prediction
+   4. DagsHub auto-enables:
+      - MLflow tracking server  → <repo>.mlflow
+      - DVC remote storage      → <repo>.dvc
+
+   ### STEP B — Generate access token (manual, one-time)
+   1. DagsHub → top-right avatar → Settings → Access Tokens
+   2. Click "Generate new token" → Name it (e.g. FlightDelay_Prediction)
+   3. Copy the token immediately (shown only once)
+   Token used: 065997e88f5fdedb8f25c0050c2668f6e4a97596  (name: FlightDelay_Prediction)
+
+   ### STEP C — Set environment variables (run every new terminal session)
+   ```powershell
+   $env:DAGSHUB_USER             = "chauhan7gaurav"
+   $env:MLFLOW_TRACKING_URI      = "https://dagshub.com/chauhan7gaurav/MLOPS_FLIGHT_DELAY_PREDICTION.mlflow"
+   $env:MLFLOW_TRACKING_USERNAME = "chauhan7gaurav"
+   $env:MLFLOW_TRACKING_PASSWORD = "065997e88f5fdedb8f25c0050c2668f6e4a97596"
+   ```
+   Tip: Add these to a `.env` file and load with python-dotenv so they persist.
+
+   ### STEP D — Init DVC & configure remote (one-time, already done ✅)
+   ```powershell
+   dvc init -f                          # force if .dvc/ already existed
+   dvc remote add origin https://dagshub.com/chauhan7gaurav/MLOPS_FLIGHT_DELAY_PREDICTION.dvc
+   dvc remote default origin
    dvc remote modify origin --local auth basic
+   dvc remote modify origin --local user chauhan7gaurav
+   dvc remote modify origin --local password 065997e88f5fdedb8f25c0050c2668f6e4a97596
    ```
-   
-   Track data:
-   ```bash
-   # Track raw data
-   dvc add delay_data/flights_sample.csv
-   dvc add delay_data/weather_data.csv
-   
-   # Track artifacts
-   dvc add Artifacts/
-   dvc add final_model/
-   
-   git add .dvc/ *.dvc .gitignore
-   git commit -m "track data with DVC"
+   Note: --local flags write to .dvc/config.local (gitignored) — credentials never committed.
+
+   ### STEP E — Track raw data with DVC (one-time, already done ✅)
+   ```powershell
+   # Remove from git first (can't be tracked by both)
+   git rm -r --cached delay_data/flights_sample.csv delay_data/weather_data.csv
+   git commit -m "untrack raw data from git (moving to DVC)"
+
+   # Hand off to DVC
+   dvc add delay_data/flights_sample.csv delay_data/weather_data.csv
+
+   # Commit DVC pointer files
+   git add "delay_data\flights_sample.csv.dvc" "delay_data\.gitignore" "delay_data\weather_data.csv.dvc" dvc.yaml params.yaml .dvc/config
+   git commit -m "track raw data with DVC, add dvc.yaml pipeline"
+
+   # Push data to DagsHub storage
    dvc push
+   # → 2 files pushed ✅
    ```
-   
-   Pipeline (dvc.yaml):
+
+   ### STEP F — Verify MLflow → DagsHub connection (already done ✅)
+   ```powershell
+   python -c "
+   import mlflow, os
+   mlflow.set_tracking_uri(os.environ['MLFLOW_TRACKING_URI'])
+   mlflow.set_experiment('FlightDelay_Prediction')
+   with mlflow.start_run(run_name='connectivity_test') as run:
+       mlflow.log_param('test', 'dagshub_connection')
+       mlflow.log_metric('status', 1.0)
+       print('Run ID:', run.info.run_id)
+       print('MLflow → DagsHub: SUCCESS')
+   "
+   # Experiment 'FlightDelay_Prediction' created on DagsHub ✅
+   # View at: https://dagshub.com/chauhan7gaurav/MLOPS_FLIGHT_DELAY_PREDICTION/experiments
+   ```
+
+   ### STEP G — Run training pipeline (generates real MLflow runs)
+   ```powershell
+   # Env vars must be set (STEP C) before running
+   python training_pipeline.py
+   # Each run auto-logs: params, metrics (R², MAE, RMSE), model artifact
+   # Model registered as 'FlightDelayModel' in MLflow Registry
+   # If accepted → promoted to Production stage automatically
+   ```
+
+   ## DVC - Data & Artifact Versioning ✅ DONE
+   path - dvc.yaml, .dvc/config
+
+   Pipeline defined in dvc.yaml (single stage wrapping full pipeline):
    ```yaml
    stages:
-     data_ingestion:
-       cmd: python -c "from flightdelay.pipeline.training_pipeline import TrainingPipeline; TrainingPipeline().run_pipeline()"
+     training_pipeline:
+       cmd: python training_pipeline.py
        deps:
          - delay_data/flights_sample.csv
          - delay_data/airports.csv
+         - delay_data/airlines.csv
+         - delay_data/holidays.csv
+         - delay_data/weather_data.csv
+         - flightdelay/components/modeltraining.py
+         - flightdelay/components/modelevaluation.py
+       params:
+         - params.yaml
        outs:
-         - Artifacts/${timestamp}/data_ingestion
-     
-     data_validation:
-       cmd: ...
-       deps:
-         - Artifacts/${timestamp}/data_ingestion
-       outs:
-         - Artifacts/${timestamp}/data_validation
-     
-     # Similar for transformation, training, evaluation, pushing
+         - final_model:
+             persist: true
    ```
-   
-   ## DagsHub - Unified MLOps Hub
-   - Setup: Create repo on dagshub.com, connect GitHub
-   - MLflow tracking: Auto-synced via MLFLOW_TRACKING_URI
-   - DVC storage: Uses DagsHub as remote storage
-   - View runs in DagsHub Experiments UI
+   Run pipeline via DVC (tracks deps/outs, skips unchanged stages):
+   ```powershell
+   dvc repro        # re-runs only changed stages
+   dvc push         # push new artifacts to DagsHub
+   ```
 
 # 12. Training Pipeline Orchestrator
 
