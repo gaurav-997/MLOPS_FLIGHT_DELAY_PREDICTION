@@ -1,2 +1,4 @@
+[core]
+    remote = origin
 ['remote "origin"']
-    url = https://dagshub.com/chauhan7gaurav/mlops_flight_delay_prediction.dvc
+    url = https://dagshub.com/chauhan7gaurav/MLOPS_FLIGHT_DELAY_PREDICTION.dvc
