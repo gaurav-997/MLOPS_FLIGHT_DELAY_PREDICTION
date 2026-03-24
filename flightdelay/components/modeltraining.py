@@ -18,6 +18,7 @@ from flightdelay.exception.exception import CustomException
 from flightdelay.entity.config_entity import ModelTrainerConfig
 from flightdelay.entity.artifact_entity import DataTransformationArtifact, ModelTrainerArtifact, RegressionMetricArtifact
 from flightdelay.utils.main_utils import save_object, load_numpy_array_data
+from flightdelay.utils.ml_utils.mlflow_utils import log_model_training
 
 
 class ModelTrainer:
@@ -266,14 +267,37 @@ class ModelTrainer:
             logger.info(f"Best model saved: {self.model_trainer_config.trained_model_file_path}")
             print(f"  Model saved: {self.model_trainer_config.trained_model_file_path}")
             print("  [PASS] Model saved successfully")
-            
+
+            # Step 5: Log training run to MLflow / DagsHub
+            print("\n[Step 5/5] Logging run to MLflow...")
+            try:
+                mlflow_run_id = log_model_training(
+                    best_model=best_model,
+                    best_model_name=best_model_name,
+                    train_r2=train_metrics.r2_score,
+                    test_r2=test_metrics.r2_score,
+                    test_mae=test_metrics.mae,
+                    test_rmse=test_metrics.rmse,
+                    test_mse=test_metrics.mse,
+                    expected_score=self.model_trainer_config.expected_score,
+                    overfitting_threshold=self.model_trainer_config.overfitting_threshold,
+                    features_count=X_train.shape[1],
+                )
+                print(f"  MLflow run id: {mlflow_run_id}")
+                print("  [PASS] MLflow logging completed")
+            except Exception as mlflow_err:
+                # MLflow logging is non-critical – log warning but do not abort
+                logger.warning(f"MLflow logging failed (non-fatal): {mlflow_err}")
+                mlflow_run_id = None
+
             # Create artifact
             model_trainer_artifact = ModelTrainerArtifact(
                 trained_model_file_path=self.model_trainer_config.trained_model_file_path,
                 train_metric_artifact=train_metrics,
                 test_metric_artifact=test_metrics,
                 best_model_name=best_model_name,
-                best_model_score=test_metrics.r2_score
+                best_model_score=test_metrics.r2_score,
+                mlflow_run_id=mlflow_run_id,
             )
             
             logger.info("="*70)

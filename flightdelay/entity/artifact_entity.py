@@ -38,6 +38,7 @@ class ModelTrainerArtifact:
     test_metric_artifact: RegressionMetricArtifact
     best_model_name: str
     best_model_score: float
+    mlflow_run_id: str = None
 
 @dataclass
 class ModelEvaluationArtifact:
