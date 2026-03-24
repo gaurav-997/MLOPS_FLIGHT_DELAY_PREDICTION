@@ -1,0 +1,92 @@
+schema: '2.0'
+stages:
+  training_pipeline:
+    cmd: python training_pipeline.py
+    deps:
+    - path: delay_data/airlines.csv
+      hash: md5
+      md5: 0a1fbb6503633d28a75d70eb2f32e49f
+      size: 374
+    - path: delay_data/airports.csv
+      hash: md5
+      md5: 659ce5fe7043ea589d83cbb4cef7ee52
+      size: 24119
+    - path: delay_data/flights_sample.csv
+      hash: md5
+      md5: 3c8b78f20016a3a151d385d0b2027c12
+      size: 10085279
+    - path: delay_data/holidays.csv
+      hash: md5
+      md5: 52d297877c20c8abf80f3b88506d9950
+      size: 373
+    - path: delay_data/weather_data.csv
+      hash: md5
+      md5: 92965d2ac29ca49bea9eba81d77fabd9
+      size: 6487
+    - path: flightdelay/components/dataingestion.py
+      hash: md5
+      md5: 4bae0cf7c8fca14c59bccdb80f528817
+      size: 5715
+    - path: flightdelay/components/datatransformation.py
+      hash: md5
+      md5: ca29df40c537487ca0eb89e4b405f8ca
+      size: 20939
+    - path: flightdelay/components/datavalidation.py
+      hash: md5
+      md5: d8b7d755193ac8143530c9c43498feb3
+      size: 28866
+    - path: flightdelay/components/modelevaluation.py
+      hash: md5
+      md5: e53da5aa02250db5e2310bb2f56d25d0
+      size: 12602
+    - path: flightdelay/components/modeltraining.py
+      hash: md5
+      md5: ecc34b8ceaa2b7e5c3f7cb56b3046222
+      size: 14656
+    - path: flightdelay/utils/ml_utils/mlflow_utils.py
+      hash: md5
+      md5: af006c69f0654cffc1036fce9676be12
+      size: 8273
+    params:
+      params.yaml:
+        data_ingestion:
+          flights_file: delay_data/flights_sample.csv
+          airports_file: delay_data/airports.csv
+          airlines_file: delay_data/airlines.csv
+          holidays_file: delay_data/holidays.csv
+          weather_file: delay_data/weather_data.csv
+        data_transformation:
+          test_size: 0.2
+          random_state: 42
+        data_validation:
+          drift_threshold: 0.05
+        model_evaluation:
+          change_threshold: 0.02
+        model_trainer:
+          expected_score: 0.6
+          overfitting_threshold: 0.1
+          models:
+            random_forest:
+              n_estimators: 50
+              max_depth: 10
+              max_features: sqrt
+            gradient_boosting:
+              n_estimators: 50
+              max_depth: 4
+              learning_rate: 0.1
+            xgboost:
+              n_estimators: 50
+              max_depth: 5
+              learning_rate: 0.1
+            lightgbm:
+              n_estimators: 50
+              max_depth: 5
+              learning_rate: 0.1
+            ridge:
+              alpha: 1.0
+    outs:
+    - path: final_model
+      hash: md5
+      md5: a7e07920a9a08117a49dc100d4b3c5b3.dir
+      size: 20460495
+      nfiles: 2
