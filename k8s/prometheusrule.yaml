@@ -1,0 +1,89 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: flight-delay-alerts
+  namespace: flight-delay
+  labels:
+    release: prometheus          # must match the Prometheus Operator helm release label
+spec:
+  groups:
+    - name: model_alerts
+      interval: 60s
+      rules:
+
+        # ------------------------------------------------------------------ #
+        # Data drift                                                           #
+        # ------------------------------------------------------------------ #
+        - alert: DataDriftDetected
+          expr: flight_model_drift_score > 0.5
+          for: 10m
+          labels:
+            severity: critical
+            action: trigger_retraining
+          annotations:
+            summary: "Data drift detected in flight-delay model"
+            description: >
+              Mean PSI drift score is {{ $value | printf "%.3f" }}, which exceeds
+              the threshold of 0.5. Feature distributions have shifted significantly
+              from the training baseline.
+
+        # ------------------------------------------------------------------ #
+        # Accuracy drop                                                        #
+        # ------------------------------------------------------------------ #
+        - alert: ModelAccuracyDrop
+          expr: flight_rolling_r2 < 0.70
+          for: 15m
+          labels:
+            severity: critical
+            action: trigger_retraining
+          annotations:
+            summary: "Flight-delay model accuracy has dropped"
+            description: >
+              Rolling R² = {{ $value | printf "%.3f" }} is below the 0.70 threshold.
+              Ground-truth feedback indicates the model is underperforming.
+
+        # ------------------------------------------------------------------ #
+        # High prediction latency                                              #
+        # ------------------------------------------------------------------ #
+        - alert: HighPredictionLatency
+          expr: >
+            histogram_quantile(0.99,
+              rate(flight_prediction_latency_seconds_bucket[5m])
+            ) > 1.0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Flight-delay prediction p99 latency > 1 s"
+            description: >
+              99th-percentile prediction latency is
+              {{ $value | printf "%.2f" }} s over the last 5 minutes.
+
+        # ------------------------------------------------------------------ #
+        # Elevated error rate                                                  #
+        # ------------------------------------------------------------------ #
+        - alert: HighPredictionErrorRate
+          expr: >
+            rate(flight_model_errors_total[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High prediction error rate"
+            description: >
+              Model error rate is {{ $value | printf "%.3f" }} errors/s over
+              the last 5 minutes.
+
+        # ------------------------------------------------------------------ #
+        # Data quality                                                         #
+        # ------------------------------------------------------------------ #
+        - alert: LowDataQuality
+          expr: flight_data_quality_score < 0.8
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Input data quality is low"
+            description: >
+              Data quality score = {{ $value | printf "%.3f" }} (< 0.8).
+              High null rates or out-of-range feature values detected.

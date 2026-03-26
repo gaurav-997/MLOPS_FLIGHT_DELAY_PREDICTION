@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flight-delay-api-monitor
+  namespace: flight-delay
+  labels:
+    release: prometheus          # must match the Prometheus Operator helm release label
+spec:
+  selector:
+    matchLabels:
+      app: flight-delay-api
+  namespaceSelector:
+    matchNames:
+      - flight-delay
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s

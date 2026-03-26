@@ -25,11 +25,22 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.responses import RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from flightdelay.logging.logger import logger
 from flightdelay.utils.main_utils import load_object
 from flightdelay.utils.ml_utils.model.estimator import FlightDelayModel
+from flightdelay.utils.prometheus_utils import (
+    predictions_total,
+    prediction_latency,
+    delay_class_predictions,
+    model_drift_score,
+    rolling_mae as prom_rolling_mae,
+    rolling_r2 as prom_rolling_r2,
+    model_errors,
+    data_quality_score,
+)
+from flightdelay.components.modelmonitoring import ModelMonitor
 
 # ---------------------------------------------------------------------------
 # App init
@@ -44,29 +55,7 @@ app = FastAPI(
 templates = Jinja2Templates(directory="templates")
 
 # ---------------------------------------------------------------------------
-# Prometheus metrics
-# ---------------------------------------------------------------------------
-
-predictions_total = Counter(
-    "flight_predictions_total",
-    "Total number of predictions served",
-    ["model_version"],
-)
-prediction_latency = Histogram(
-    "flight_prediction_latency_seconds",
-    "End-to-end prediction latency in seconds",
-)
-delay_predictions = Counter(
-    "flight_delay_predictions",
-    "Prediction counts split by delay class",
-    ["delay_class"],
-)
-model_errors = Counter(
-    "flight_model_errors_total",
-    "Errors during prediction",
-    ["error_type"],
-)
-
+# Metrics imported from prometheus_utils (see flightdelay/utils/main_utils/)
 # ---------------------------------------------------------------------------
 # Model — loaded once at startup
 # ---------------------------------------------------------------------------
@@ -95,10 +84,14 @@ def _load_model() -> FlightDelayModel | None:
         return None
 
 
+monitor: ModelMonitor | None = None
+
+
 @app.on_event("startup")
 def startup_event():
-    global network_model
+    global network_model, monitor
     network_model = _load_model()
+    monitor = ModelMonitor()
 
 
 # ---------------------------------------------------------------------------
@@ -206,10 +199,14 @@ async def predict(request: Request, file: UploadFile = File(...)):
         df["DELAY_CLASS"] = (predictions > 15).astype(int)
 
         elapsed = time.time() - start_time
-        predictions_total.labels(model_version="v1.0").inc(len(df))
+        predictions_total.labels(model_version="v1.0", endpoint="/predict").inc(len(df))
         prediction_latency.observe(elapsed)
-        delay_predictions.labels(delay_class="delayed").inc(int((df["DELAY_CLASS"] == 1).sum()))
-        delay_predictions.labels(delay_class="ontime").inc(int((df["DELAY_CLASS"] == 0).sum()))
+        delay_class_predictions.labels(delay_class="delayed").inc(int((df["DELAY_CLASS"] == 1).sum()))
+        delay_class_predictions.labels(delay_class="ontime").inc(int((df["DELAY_CLASS"] == 0).sum()))
+
+        # Assess input data quality and update gauge
+        if monitor:
+            monitor.assess_data_quality(df)
 
         # Persist predictions
         os.makedirs("prediction_output", exist_ok=True)
@@ -241,6 +238,28 @@ async def metrics():
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
+@app.post("/drift", tags=["monitoring"])
+async def check_drift(file: UploadFile = File(...)):
+    """
+    Upload a CSV of recent production inputs.
+    Runs PSI drift detection and returns per-feature scores + aggregate.
+    """
+    if monitor is None:
+        raise HTTPException(status_code=503, detail="Monitor not initialised.")
+    try:
+        content = await file.read()
+        df = pd.read_csv(io.BytesIO(content))
+        drift_score = monitor.calculate_drift_score(df)
+        return {
+            "drift_score": drift_score,
+            "threshold": 0.5,
+            "alert": drift_score > 0.5,
+        }
+    except Exception as exc:
+        logger.error(f"/drift failed: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 @app.post("/feedback", tags=["monitoring"])
 async def submit_feedback(feedback: FeedbackRequest):
     """
@@ -263,11 +282,21 @@ async def submit_feedback(feedback: FeedbackRequest):
         else:
             row_df.to_csv(feedback_path, index=False)
 
-        # Simple drift heuristic: if >100 feedback rows accumulated, flag for retraining
         feedback_df = pd.read_csv(feedback_path)
-        should_retrain = len(feedback_df) >= 100
 
-        return {"status": "success", "should_retrain": should_retrain, "feedback_count": len(feedback_df)}
+        # Run accuracy-drop check via ModelMonitor
+        accuracy_drop = False
+        if monitor and "prediction" in feedback_df.columns:
+            accuracy_drop = monitor.check_accuracy_drop(feedback_df)
+
+        should_retrain = len(feedback_df) >= 100 or accuracy_drop
+
+        return {
+            "status": "success",
+            "should_retrain": should_retrain,
+            "feedback_count": len(feedback_df),
+            "accuracy_drop": accuracy_drop,
+        }
 
     except Exception as exc:
         logger.error(f"/feedback failed: {exc}")
