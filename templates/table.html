@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flight Delay Predictions</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Segoe UI", Arial, sans-serif; background: #f0f2f5; color: #333; }
+
+        header {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        header h1 { font-size: 1.5rem; font-weight: 600; }
+        header p  { font-size: 0.85rem; opacity: 0.7; margin-top: 4px; }
+
+        .summary {
+            display: flex;
+            gap: 16px;
+            padding: 20px 32px;
+            flex-wrap: wrap;
+        }
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            flex: 1;
+            min-width: 160px;
+        }
+        .card .label { font-size: 0.75rem; text-transform: uppercase; color: #888; letter-spacing: .05em; }
+        .card .value { font-size: 1.8rem; font-weight: 700; margin-top: 4px; }
+        .card.total  .value { color: #1a1a2e; }
+        .card.delayed .value { color: #e74c3c; }
+        .card.ontime  .value { color: #27ae60; }
+        .card.latency .value { font-size: 1.4rem; color: #2980b9; }
+
+        .table-wrap {
+            margin: 0 32px 32px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: auto;
+        }
+        .table-header {
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        thead tr { background: #f7f8fa; }
+        th {
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #eee;
+            white-space: nowrap;
+        }
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            white-space: nowrap;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafbff; }
+
+        .badge {
+            display: inline-block;
+            border-radius: 12px;
+            padding: 2px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-delayed { background: #fdecea; color: #c0392b; }
+        .badge-ontime  { background: #eafaf1; color: #1e8449; }
+
+        .note { padding: 8px 32px 24px; font-size: 0.78rem; color: #999; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>✈ Flight Delay Predictions</h1>
+        <p>Results for uploaded CSV — top 100 rows shown</p>
+    </div>
+</header>
+
+<div class="summary">
+    <div class="card total">
+        <div class="label">Total Flights</div>
+        <div class="value">{{ total_flights }}</div>
+    </div>
+    <div class="card delayed">
+        <div class="label">Delayed (&gt;15 min)</div>
+        <div class="value">{{ delayed_count }}</div>
+    </div>
+    <div class="card ontime">
+        <div class="label">On-time</div>
+        <div class="value">{{ ontime_count }}</div>
+    </div>
+    <div class="card latency">
+        <div class="label">Inference time</div>
+        <div class="value">{{ latency_ms }} ms</div>
+    </div>
+</div>
+
+<div class="table-wrap">
+    <div class="table-header">Prediction Results (showing up to 100 rows)</div>
+    <table>
+        <thead>
+            <tr>
+                {% for col in columns %}
+                <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                {% for col in columns %}
+                    {% if col == "DELAY_CLASS" %}
+                        <td>
+                            {% if row[col] == 1 %}
+                                <span class="badge badge-delayed">DELAYED</span>
+                            {% else %}
+                                <span class="badge badge-ontime">ON TIME</span>
+                            {% endif %}
+                        </td>
+                    {% elif col == "PREDICTED_DELAY" %}
+                        <td>{{ "%.1f"|format(row[col]) }} min</td>
+                    {% else %}
+                        <td>{{ row[col] }}</td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<p class="note">Full results saved to <code>prediction_output/predictions.csv</code></p>
+
+</body>
+</html>
