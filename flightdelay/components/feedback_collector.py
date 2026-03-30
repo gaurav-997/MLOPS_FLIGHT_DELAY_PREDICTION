@@ -11,22 +11,19 @@ DB path defaults to `feedback_data/feedback.db` — created automatically.
 """
 
 import os
-import sys
 import json
 import sqlite3
 import threading
 
-import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error
 
 from flightdelay.logging.logger import logger
-from flightdelay.exception.exception import CustomException
 
 DEFAULT_DB_PATH = os.path.join("feedback_data", "feedback.db")
-BASELINE_MAE    = 10.0   # minutes — update after first training run
-RETRAIN_MAE_MULTIPLIER = 1.20   # trigger if rolling MAE > baseline * 1.20
-MIN_LABELED_ROWS       = 100    # minimum labeled rows before assessing
+BASELINE_MAE = 10.0  # minutes — update after first training run
+RETRAIN_MAE_MULTIPLIER = 1.20  # trigger if rolling MAE > baseline * 1.20
+MIN_LABELED_ROWS = 100  # minimum labeled rows before assessing
 
 
 class FeedbackCollector:

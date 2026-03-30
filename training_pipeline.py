@@ -141,47 +141,52 @@ class TrainingPipeline:
             logger.info(" STARTING COMPLETE TRAINING PIPELINE")
             logger.info(f" Artifacts Directory: {self.training_pipeline_config.artifact_dir}")
             logger.info("="*80 + "\n")
-            
+
             # Step 1: Data Ingestion
             data_ingestion_artifact = self.start_data_ingestion()
-            
+
             # Step 2: Data Validation
             data_validation_artifact = self.start_data_validation(data_ingestion_artifact)
-            
+
             # Step 3: Data Transformation
             data_transformation_artifact = self.start_data_transformation(
                 data_validation_artifact
             )
-            
+
             # Step 4: Model Training
             model_trainer_artifact = self.start_model_training(data_transformation_artifact)
-            
+
             # Step 5: Model Evaluation
             model_evaluation_artifact = self.start_model_evaluation(
                 model_trainer_artifact,
                 data_transformation_artifact
             )
-            
+
             # Summary
+            validation_status = (
+                'PASSED' if data_validation_artifact.data_validation_status else 'FAILED'
+            )
+            accepted_status = 'YES' if model_evaluation_artifact.is_model_accepted else 'NO'
+
             logger.info("\n" + "="*80)
             logger.info(" PIPELINE EXECUTION COMPLETED SUCCESSFULLY!")
             logger.info("="*80)
-            logger.info(f"\nFINAL RESULTS:")
-            logger.info(f"  - Data Validation: {'PASSED' if data_validation_artifact.data_validation_status else 'FAILED'}")
+            logger.info("\nFINAL RESULTS:")
+            logger.info(f"  - Data Validation: {validation_status}")
             logger.info(f"  - Best Model: {model_trainer_artifact.best_model_name}")
-            logger.info(f"  - Test R²: {model_trainer_artifact.test_metric_artifact.r2_score:.4f}")
+            logger.info(f"  - Test R2: {model_trainer_artifact.test_metric_artifact.r2_score:.4f}")
             logger.info(f"  - Test MAE: {model_trainer_artifact.test_metric_artifact.mae:.2f} minutes")
-            logger.info(f"  - Model Accepted: {'YES' if model_evaluation_artifact.is_model_accepted else 'NO'}")
-            logger.info(f"  - R² Improvement: {model_evaluation_artifact.improved_score:.4f}")
-            
+            logger.info(f"  - Model Accepted: {accepted_status}")
+            logger.info(f"  - R2 Improvement: {model_evaluation_artifact.improved_score:.4f}")
+
             if model_evaluation_artifact.is_model_accepted:
                 logger.info(f"\n  Production Model: {model_evaluation_artifact.best_model_path}")
-            
+
             logger.info(f"\n  All artifacts saved to: {self.training_pipeline_config.artifact_dir}")
             logger.info("="*80 + "\n")
-            
+
             return model_evaluation_artifact
-            
+
         except Exception as e:
             logger.error(f"Pipeline execution failed: {str(e)}")
             raise CustomException(e, sys)
