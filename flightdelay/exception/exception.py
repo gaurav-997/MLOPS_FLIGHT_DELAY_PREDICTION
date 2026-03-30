@@ -1,4 +1,4 @@
-
+﻿
 """Custom exception utilities for the project."""
 
 import sys
@@ -34,4 +34,3 @@ class CustomException(Exception):
                 self.file_name, self.lineno, str(self.error_message)
             )
         )
-

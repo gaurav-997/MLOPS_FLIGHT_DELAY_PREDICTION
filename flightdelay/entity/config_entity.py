@@ -1,4 +1,4 @@
-import os 
+﻿import os
 import sys
 from flightdelay.logging.logger import logger
 from flightdelay.exception.exception import CustomException
@@ -15,7 +15,7 @@ class TrainingPipelineConfig:
             self.artifact_dir = os.path.join(self.artifact_dir_name, timestamp)
         except Exception as e:
             raise CustomException(e, sys)
-        
+
 class DataIngestionConfig:
     def __init__(self,training_pipeline_config: TrainingPipelineConfig):
         try:
@@ -29,7 +29,7 @@ class DataIngestionConfig:
 
         except Exception as e:
             raise CustomException(e, sys)
-        
+
 class DataValidationConfig:
     def __init__(self,training_pipeline_config: TrainingPipelineConfig):
         try:

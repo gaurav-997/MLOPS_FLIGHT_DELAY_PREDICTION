@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 import yaml
 import numpy as np
@@ -19,12 +19,12 @@ from flightdelay.utils.ml_utils.mlflow_utils import log_model_evaluation, promot
 class ModelEvaluation:
     """
     Model Evaluation Component
-    
+
     Compares newly trained model with production model (if exists).
     Accepts new model only if it improves R² by at least CHANGED_THRESHOLD.
     Saves best model to final_model/ directory for production use.
     """
-    
+
     def __init__(
         self,
         model_trainer_artifact: ModelTrainerArtifact,
@@ -37,15 +37,15 @@ class ModelEvaluation:
             self.model_evaluation_config = model_evaluation_config
         except Exception as e:
             raise CustomException(e, sys)
-    
+
     def calculate_metrics(self, y_true, y_pred) -> RegressionMetricArtifact:
         """
         Calculate regression metrics
-        
+
         Args:
             y_true: True target values
             y_pred: Predicted values
-        
+
         Returns:
             RegressionMetricArtifact with r2, mae, rmse, mse
         """
@@ -54,7 +54,7 @@ class ModelEvaluation:
             mae = mean_absolute_error(y_true, y_pred)
             rmse = np.sqrt(mean_squared_error(y_true, y_pred))
             mse = mean_squared_error(y_true, y_pred)
-            
+
             return RegressionMetricArtifact(
                 r2_score=r2,
                 mae=mae,
@@ -63,7 +63,7 @@ class ModelEvaluation:
             )
         except Exception as e:
             raise CustomException(e, sys)
-    
+
     def evaluate_model(
         self,
         model,
@@ -72,30 +72,30 @@ class ModelEvaluation:
     ) -> RegressionMetricArtifact:
         """
         Evaluate a model on test data
-        
+
         Args:
             model: Trained model object
             X_test: Test features
             y_test: Test target
-        
+
         Returns:
             RegressionMetricArtifact
         """
         try:
             logger.info("Evaluating model on test data...")
-            
+
             # Predict
             y_pred = model.predict(X_test)
-            
+
             # Calculate metrics
             metrics = self.calculate_metrics(y_test, y_pred)
-            
+
             logger.info(f"Model Metrics - R²: {metrics.r2_score:.4f}, MAE: {metrics.mae:.2f}, RMSE: {metrics.rmse:.2f}")
-            
+
             return metrics
         except Exception as e:
             raise CustomException(e, sys)
-    
+
     def save_evaluation_report(
         self,
         is_model_accepted: bool,
@@ -105,7 +105,7 @@ class ModelEvaluation:
     ):
         """
         Save evaluation report as YAML
-        
+
         Args:
             is_model_accepted: Whether new model was accepted
             improvement: R² improvement score
@@ -115,7 +115,7 @@ class ModelEvaluation:
         try:
             # Create report directory
             os.makedirs(self.model_evaluation_config.model_evaluation_dir, exist_ok=True)
-            
+
             # Prepare report data
             report = {
                 'model_evaluation': {
@@ -130,7 +130,7 @@ class ModelEvaluation:
                     }
                 }
             }
-            
+
             # Add production model metrics if available
             if best_model_metrics:
                 report['model_evaluation']['production_model'] = {
@@ -139,19 +139,19 @@ class ModelEvaluation:
                     'rmse': float(best_model_metrics.rmse),
                     'mse': float(best_model_metrics.mse)
                 }
-            
+
             # Save report
             with open(self.model_evaluation_config.report_file_path, 'w') as f:
                 yaml.dump(report, f, default_flow_style=False)
-            
+
             logger.info(f"Evaluation report saved to: {self.model_evaluation_config.report_file_path}")
         except Exception as e:
             raise CustomException(e, sys)
-    
+
     def initiate_model_evaluation(self) -> ModelEvaluationArtifact:
         """
         Main method to evaluate and compare models
-        
+
         Returns:
             ModelEvaluationArtifact with evaluation results
         """
@@ -159,40 +159,40 @@ class ModelEvaluation:
             logger.info("="*70)
             logger.info("Starting Model Evaluation...")
             logger.info("="*70)
-            
+
             # Step 1: Load test data
             logger.info("Step 1/5: Loading test data...")
             test_arr = load_numpy_array_data(self.data_transformation_artifact.transformed_test_file_path)
             X_test = test_arr[:, :-1]
             y_test = test_arr[:, -1]
             logger.info(f"Test data loaded: {X_test.shape[0]} samples, {X_test.shape[1]} features")
-            
+
             # Step 2: Load trained model
             logger.info("Step 2/5: Loading trained model...")
             trained_model = load_object(self.model_trainer_artifact.trained_model_file_path)
             logger.info(f"Trained model loaded: {self.model_trainer_artifact.best_model_name}")
-            
+
             # Step 3: Evaluate trained model
             logger.info("Step 3/5: Evaluating trained model...")
             trained_metrics = self.evaluate_model(trained_model, X_test, y_test)
             trained_r2 = trained_metrics.r2_score
-            
+
             # Step 4: Check if production model exists
             logger.info("Step 4/5: Checking for production model...")
             best_model_file_path = self.model_evaluation_config.best_model_file_path
-            
+
             if os.path.exists(best_model_file_path):
                 logger.info(f"Production model found at: {best_model_file_path}")
-                
+
                 # Load and evaluate production model
                 production_model = load_object(best_model_file_path)
                 production_metrics = self.evaluate_model(production_model, X_test, y_test)
                 production_r2 = production_metrics.r2_score
-                
+
                 # Compare models
                 improvement = trained_r2 - production_r2
                 is_model_accepted = improvement >= self.model_evaluation_config.change_threshold
-                
+
                 logger.info(f"\n{'='*70}")
                 logger.info(f"MODEL COMPARISON:")
                 logger.info(f"  Production R²: {production_r2:.4f}")
@@ -200,42 +200,42 @@ class ModelEvaluation:
                 logger.info(f"  Improvement:   {improvement:.4f} (Threshold: {self.model_evaluation_config.change_threshold})")
                 logger.info(f"  Decision:      {'ACCEPTED [YES]' if is_model_accepted else 'REJECTED [NO]'}")
                 logger.info(f"{'='*70}\n")
-                
+
                 best_model_metric = production_metrics
-                
+
             else:
                 # No production model exists - accept first model
                 logger.info("No production model found. This is the first model.")
                 is_model_accepted = True
                 improvement = trained_r2
                 best_model_metric = trained_metrics
-                
+
                 logger.info(f"\n{'='*70}")
                 logger.info(f"FIRST MODEL EVALUATION:")
                 logger.info(f"  New Model R²: {trained_r2:.4f}")
                 logger.info(f"  Decision:     ACCEPTED [YES] (First model)")
                 logger.info(f"{'='*70}\n")
-            
+
             # Step 5: Save best model if accepted
             logger.info("Step 5/5: Saving best model...")
             if is_model_accepted:
                 # Create best model directory
                 os.makedirs(self.model_evaluation_config.best_model_dir, exist_ok=True)
-                
+
                 # Save trained model as best model
                 save_object(best_model_file_path, trained_model)
                 logger.info(f"Best model saved to: {best_model_file_path}")
-                
+
                 # Also save preprocessor
                 preprocessor = load_object(self.data_transformation_artifact.transformed_object_file_path)
                 save_object(self.model_evaluation_config.best_preprocessor_file_path, preprocessor)
                 logger.info(f"Preprocessor saved to: {self.model_evaluation_config.best_preprocessor_file_path}")
-                
+
                 best_model_path = best_model_file_path
             else:
                 logger.info("Model not accepted. Production model remains unchanged.")
                 best_model_path = best_model_file_path
-            
+
             # Save evaluation report
             self.save_evaluation_report(
                 is_model_accepted=is_model_accepted,
@@ -280,12 +280,12 @@ class ModelEvaluation:
                 best_model_metric=best_model_metric,
                 report_file_path=self.model_evaluation_config.report_file_path
             )
-            
+
             logger.info("="*70)
             logger.info("Model Evaluation Completed Successfully!")
             logger.info("="*70)
-            
+
             return model_evaluation_artifact
-            
+
         except Exception as e:
             raise CustomException(e, sys)

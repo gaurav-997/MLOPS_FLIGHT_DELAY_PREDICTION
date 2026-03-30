@@ -1,4 +1,4 @@
-# common constants for the project
+﻿# common constants for the project
 PIPELINE_NAME = 'flight_delay_prediction_pipeline'
 TARGET_COLUMN = 'ARRIVAL_DELAY'
 TRAIN_FILE_NAME = 'train.csv'
@@ -10,7 +10,7 @@ ARTIFACT_DIR_NAME = 'Artifacts'
 SCHEMA_VALIDATION_DIR_NAME = 'schema_validation'
 
 
-# data ingestion constants 
+# data ingestion constants
 DATA_INGESTION_DIR_NAME = 'data_ingestion'
 DATA_INGESTION_INGESTED_DIR = 'ingested'
 DATA_INGESTION_INGESTED_FLIGHTS_FILE_NAME = 'flights.csv'
@@ -48,4 +48,3 @@ MODEL_EVALUATION_CHANGED_THRESHOLD = 0.02  # Min R² improvement
 BEST_MODEL_DIR = 'final_model'
 BEST_MODEL_FILE_NAME = 'model.pkl'
 BEST_PREPROCESSOR_FILE_NAME = 'preprocessor.pkl'
-

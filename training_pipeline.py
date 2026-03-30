@@ -1,9 +1,9 @@
-"""
+﻿"""
 Training Pipeline Orchestrator
 
 This runs all components in sequence:
 1. Data Ingestion
-2. Data Validation  
+2. Data Validation
 3. Data Transformation
 4. Model Training
 5. Model Evaluation
@@ -35,88 +35,88 @@ class TrainingPipeline:
     Complete ML Training Pipeline
     Orchestrates all components from data ingestion to model evaluation
     """
-    
+
     def __init__(self):
         self.training_pipeline_config = TrainingPipelineConfig()
-    
+
     def start_data_ingestion(self):
         """Step 1: Data Ingestion"""
         try:
             logger.info("\n" + "="*80)
             logger.info("[STEP 1/5] DATA INGESTION")
             logger.info("="*80)
-            
+
             data_ingestion_config = DataIngestionConfig(self.training_pipeline_config)
             data_ingestion = DataIngestion(data_ingestion_config)
             data_ingestion_artifact = data_ingestion.initiate_data_ingestion()
-            
+
             logger.info(f"Data Ingestion completed. Artifacts saved to: {data_ingestion_config.data_ingestion_dir}")
             return data_ingestion_artifact
-            
+
         except Exception as e:
             raise CustomException(e, sys)
-    
+
     def start_data_validation(self, data_ingestion_artifact):
         """Step 2: Data Validation"""
         try:
             logger.info("\n" + "="*80)
             logger.info("[STEP 2/5] DATA VALIDATION")
             logger.info("="*80)
-            
+
             data_validation_config = DataValidationConfig(self.training_pipeline_config)
             data_validation = DataValidation(data_validation_config, data_ingestion_artifact)
             data_validation_artifact = data_validation.initiate_data_validation()
-            
+
             logger.info(f"Data Validation completed. Status: {data_validation_artifact.data_validation_status}")
             return data_validation_artifact
-            
+
         except Exception as e:
             raise CustomException(e, sys)
-    
+
     def start_data_transformation(self, data_validation_artifact):
         """Step 3: Data Transformation"""
         try:
             logger.info("\n" + "="*80)
             logger.info("[STEP 3/5] DATA TRANSFORMATION + FEATURE ENGINEERING")
             logger.info("="*80)
-            
+
             data_transformation_config = DataTransformationConfig(self.training_pipeline_config)
             data_transformation = DataTransformation(
                 data_transformation_config,
                 data_validation_artifact
             )
             data_transformation_artifact = data_transformation.initiate_data_transformation()
-            
+
             logger.info(f"Data Transformation completed. Preprocessor saved.")
             return data_transformation_artifact
-            
+
         except Exception as e:
             raise CustomException(e, sys)
-    
+
     def start_model_training(self, data_transformation_artifact):
         """Step 4: Model Training"""
         try:
             logger.info("\n" + "="*80)
             logger.info("[STEP 4/5] MODEL TRAINING")
             logger.info("="*80)
-            
+
             model_trainer_config = ModelTrainerConfig(self.training_pipeline_config)
             model_trainer = ModelTrainer(model_trainer_config, data_transformation_artifact)
             model_trainer_artifact = model_trainer.initiate_model_training()
-            
+
             logger.info(f"Model Training completed. Best model: {model_trainer_artifact.best_model_name}")
             return model_trainer_artifact
-            
+
         except Exception as e:
             raise CustomException(e, sys)
-    
+
     def start_model_evaluation(self, model_trainer_artifact, data_transformation_artifact):
         """Step 5: Model Evaluation"""
         try:
             logger.info("\n" + "="*80)
             logger.info("[STEP 5/5] MODEL EVALUATION")
             logger.info("="*80)
-            
+
             model_evaluation_config = ModelEvaluationConfig(self.training_pipeline_config)
             model_evaluation = ModelEvaluation(
                 model_trainer_artifact,
@@ -124,13 +124,13 @@ class TrainingPipeline:
                 model_evaluation_config
             )
             model_evaluation_artifact = model_evaluation.initiate_model_evaluation()
-            
+
             logger.info(f"Model Evaluation completed. Accepted: {model_evaluation_artifact.is_model_accepted}")
             return model_evaluation_artifact
-            
+
         except Exception as e:
             raise CustomException(e, sys)
-    
+
     def run_pipeline(self):
         """
         Run complete training pipeline
@@ -197,11 +197,11 @@ if __name__ == "__main__":
         logger.info("="*80)
         logger.info(" MLOPS FLIGHT DELAY PREDICTION - TRAINING PIPELINE")
         logger.info("="*80 + "\n")
-        
+
         # Create and run pipeline
         pipeline = TrainingPipeline()
         model_evaluation_artifact = pipeline.run_pipeline()
-        
+
         # Final message
         print("\n" + "="*80)
         print(" >>> TRAINING PIPELINE COMPLETED SUCCESSFULLY! <<<")
@@ -213,7 +213,7 @@ if __name__ == "__main__":
         print("  2. Run pipeline again to test model comparison logic")
         print("  3. Implement Model Pusher (Step 10) to deploy model")
         print("="*80 + "\n")
-        
+
     except Exception as e:
         logger.error(f"Pipeline failed: {str(e)}")
         print("\n>>> PIPELINE FAILED <<<")
