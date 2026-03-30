@@ -213,7 +213,7 @@ class ModelTrainer:
             logger.info(f"  Test R²: {test_metric.r2_score:.4f} >= {self.model_trainer_config.expected_score:.4f}")
             logger.info(f"  Overfitting gap: {overfitting_gap:.4f} <= {self.model_trainer_config.overfitting_threshold:.4f}")
 
-            print(f"\n[PASS] Model acceptance criteria met:")
+            print("\n[PASS] Model acceptance criteria met:")
             print(f"  ✓ Test R²: {test_metric.r2_score:.4f} >= {self.model_trainer_config.expected_score:.4f}")
             print(f"  ✓ Overfitting gap: {overfitting_gap:.4f} <= {self.model_trainer_config.overfitting_threshold:.4f}")
 
