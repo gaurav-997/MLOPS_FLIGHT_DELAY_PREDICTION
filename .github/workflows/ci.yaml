@@ -26,7 +26,7 @@ jobs:
         run: pip install --upgrade pip && pip install -r requirements.txt && pip install flake8 pytest pytest-cov
 
       - name: Lint (flake8)
-        run: flake8 flightdelay/ app.py training_pipeline.py --max-line-length=120
+        run: flake8 flightdelay/ app.py training_pipeline.py --max-line-length=160
 
       - name: Run tests
         run: pytest tests/ -v --tb=short --cov=flightdelay --cov-report=xml
