@@ -52,7 +52,7 @@ jobs:
         run: pip install safety bandit
 
       - name: Dependency vulnerability check (safety)
-        run: safety check -r requirements.txt
+        run: safety scan -r requirements.txt --no-fail
         continue-on-error: true   # advisory — don't block on older deps
 
       - name: Static code security analysis (bandit)
