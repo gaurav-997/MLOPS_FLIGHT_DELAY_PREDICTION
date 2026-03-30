@@ -1,0 +1,77 @@
+name: Training Pipeline
+
+on:
+  # 1. Scheduled — every Sunday at 02:00 UTC
+  schedule:
+    - cron: "0 2 * * 0"
+
+  # 2. Manual trigger via GitHub UI
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual retraining"
+        required: false
+        default: "manual_trigger"
+
+  # 3. Webhook from Grafana / Prometheus alertmanager (drift detected)
+  repository_dispatch:
+    types: [drift-alert]
+
+jobs:
+  train:
+    name: Retrain Flight Delay Model
+    runs-on: ubuntu-latest
+    env:
+      MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+      MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+      MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Set up DVC
+        uses: iterative/setup-dvc@v1
+
+      - name: Configure DVC remote credentials
+        run: |
+          dvc remote modify origin --local auth basic
+          dvc remote modify origin --local user ${{ secrets.DAGSHUB_USER }}
+          dvc remote modify origin --local password ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+
+      - name: Pull data from DVC remote
+        run: dvc pull
+
+      - name: Run training pipeline
+        run: python training_pipeline.py
+
+      - name: Track updated model with DVC
+        run: |
+          dvc add final_model/
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add final_model.dvc dvc.lock
+          git commit -m "chore: retrained model [skip ci]" || echo "Nothing to commit"
+          git push
+
+      - name: Push model artefacts to DVC remote
+        run: dvc push
+
+      - name: Notify on success
+        if: success()
+        run: |
+          REASON="${{ github.event.inputs.reason || github.event.client_payload.reason || 'scheduled' }}"
+          echo "Training pipeline completed successfully. Reason: ${REASON}"
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "Training pipeline FAILED — check logs above."

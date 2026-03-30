@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Lint & test ─────────────────────────────────────────────────────────────
+  test:
+    name: Lint & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Lint (flake8)
+        run: flake8 flightdelay/ app.py training_pipeline.py --max-line-length=120
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short --cov=flightdelay --cov-report=xml
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+        continue-on-error: true
+
+  # ── Security scan ─────────────────────────────────────────────────────────
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install scanners
+        run: pip install safety bandit
+
+      - name: Dependency vulnerability check (safety)
+        run: safety check -r requirements.txt
+        continue-on-error: true   # advisory — don't block on older deps
+
+      - name: Static code security analysis (bandit)
+        run: bandit -r flightdelay/ app.py -ll -x flightdelay/__pycache__
