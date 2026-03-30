@@ -102,8 +102,9 @@ class ModelTrainer:
         except Exception as e:
             raise CustomException(e, sys)
 
-    def train_and_evaluate_models(self, X_train: np.ndarray, y_train: np.ndarray,
-                                   X_test: np.ndarray, y_test: np.ndarray) -> tuple:
+    def train_and_evaluate_models(
+            self, X_train: np.ndarray, y_train: np.ndarray,
+            X_test: np.ndarray, y_test: np.ndarray) -> tuple:
         """
         Train all models and return the best one
         """
@@ -179,9 +180,10 @@ class ModelTrainer:
         except Exception as e:
             raise CustomException(e, sys)
 
-    def check_model_acceptance(self, train_metric: RegressionMetricArtifact,
-                                test_metric: RegressionMetricArtifact,
-                                model_name: str) -> bool:
+    def check_model_acceptance(
+            self, train_metric: RegressionMetricArtifact,
+            test_metric: RegressionMetricArtifact,
+            model_name: str) -> bool:
         """
         Check if model meets acceptance criteria:
         1. Test R² > expected score
@@ -193,7 +195,7 @@ class ModelTrainer:
             # Check 1: Minimum performance threshold
             if test_metric.r2_score < self.model_trainer_config.expected_score:
                 logger.error(f"Model R² {test_metric.r2_score:.4f} < threshold {self.model_trainer_config.expected_score:.4f}")
-                print(f"\n[FAIL] Model performance below threshold:")
+                print("\n[FAIL] Model performance below threshold:")
                 print(f"  Test R²: {test_metric.r2_score:.4f} < Required: {self.model_trainer_config.expected_score:.4f}")
                 return False
 
@@ -201,7 +203,7 @@ class ModelTrainer:
             overfitting_gap = train_metric.r2_score - test_metric.r2_score
             if overfitting_gap > self.model_trainer_config.overfitting_threshold:
                 logger.error(f"Overfitting detected: train-test gap {overfitting_gap:.4f} > threshold {self.model_trainer_config.overfitting_threshold:.4f}")
-                print(f"\n[FAIL] Overfitting detected:")
+                print("\n[FAIL] Overfitting detected:")
                 print(f"  Train R²: {train_metric.r2_score:.4f}")
                 print(f"  Test R²: {test_metric.r2_score:.4f}")
                 print(f"  Gap: {overfitting_gap:.4f} > Threshold: {self.model_trainer_config.overfitting_threshold:.4f}")

@@ -18,10 +18,10 @@ from flightdelay.exception.exception import CustomException
 # DagsHub / Tracking URI Configuration
 # ─────────────────────────────────────────────
 
-DAGSHUB_USER    = os.getenv("DAGSHUB_USER", "chauhan7gaurav")
-REPO_NAME       = "MLOPS_FLIGHT_DELAY_PREDICTION"
+DAGSHUB_USER = os.getenv("DAGSHUB_USER", "chauhan7gaurav")
+REPO_NAME = "MLOPS_FLIGHT_DELAY_PREDICTION"
 EXPERIMENT_NAME = "FlightDelay_Prediction"
-MODEL_NAME      = "FlightDelayModel"
+MODEL_NAME = "FlightDelayModel"
 
 MLFLOW_TRACKING_URI = os.getenv(
     "MLFLOW_TRACKING_URI",

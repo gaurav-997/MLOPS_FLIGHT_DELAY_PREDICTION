@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import yaml
 from scipy.stats import ks_2samp
-from typing import Dict, List, Tuple
+from typing import Dict, List
 from datetime import datetime
 from flightdelay.logging.logger import logger
 from flightdelay.exception.exception import CustomException
@@ -233,8 +233,9 @@ class DataValidation:
         except Exception as e:
             raise CustomException(e, sys)
 
-    def detect_data_drift_numerical(self, reference_df: pd.DataFrame, current_df: pd.DataFrame,
-                                     column: str, threshold: float = 0.05) -> Dict:
+    def detect_data_drift_numerical(
+            self, reference_df: pd.DataFrame, current_df: pd.DataFrame,
+            column: str, threshold: float = 0.05) -> Dict:
         """Detect drift in numerical column using Kolmogorov-Smirnov test"""
         try:
             # Remove NaN values
@@ -269,8 +270,9 @@ class DataValidation:
             logger.error(f"Error detecting drift in {column}: {str(e)}")
             return {"column": column, "error": str(e)}
 
-    def detect_data_drift_categorical(self, reference_df: pd.DataFrame, current_df: pd.DataFrame,
-                                       column: str, threshold: float = 0.1) -> Dict:
+    def detect_data_drift_categorical(
+            self, reference_df: pd.DataFrame, current_df: pd.DataFrame,
+            column: str, threshold: float = 0.1) -> Dict:
         """Detect drift in categorical column by comparing value distributions"""
         try:
             # Get value distributions
@@ -311,8 +313,9 @@ class DataValidation:
             logger.error(f"Error detecting categorical drift in {column}: {str(e)}")
             return {"column": column, "error": str(e)}
 
-    def perform_drift_detection(self, reference_df: pd.DataFrame, current_df: pd.DataFrame,
-                                 df_name: str) -> Dict:
+    def perform_drift_detection(
+            self, reference_df: pd.DataFrame, current_df: pd.DataFrame,
+            df_name: str) -> Dict:
         """Perform comprehensive drift detection on all columns"""
         try:
             logger.info(f"Performing drift detection on {df_name}...")

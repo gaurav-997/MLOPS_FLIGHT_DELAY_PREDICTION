@@ -193,13 +193,13 @@ class ModelEvaluation:
                 improvement = trained_r2 - production_r2
                 is_model_accepted = improvement >= self.model_evaluation_config.change_threshold
 
-                logger.info(f"\n{'='*70}")
-                logger.info(f"MODEL COMPARISON:")
-                logger.info(f"  Production R²: {production_r2:.4f}")
-                logger.info(f"  New Model R²:  {trained_r2:.4f}")
+                logger.info("\n" + "="*70)
+                logger.info("MODEL COMPARISON:")
+                logger.info(f"  Production R\u00b2: {production_r2:.4f}")
+                logger.info(f"  New Model R\u00b2:  {trained_r2:.4f}")
                 logger.info(f"  Improvement:   {improvement:.4f} (Threshold: {self.model_evaluation_config.change_threshold})")
                 logger.info(f"  Decision:      {'ACCEPTED [YES]' if is_model_accepted else 'REJECTED [NO]'}")
-                logger.info(f"{'='*70}\n")
+                logger.info("="*70 + "\n")
 
                 best_model_metric = production_metrics
 
@@ -210,11 +210,11 @@ class ModelEvaluation:
                 improvement = trained_r2
                 best_model_metric = trained_metrics
 
-                logger.info(f"\n{'='*70}")
-                logger.info(f"FIRST MODEL EVALUATION:")
-                logger.info(f"  New Model R²: {trained_r2:.4f}")
-                logger.info(f"  Decision:     ACCEPTED [YES] (First model)")
-                logger.info(f"{'='*70}\n")
+                logger.info("\n" + "="*70)
+                logger.info("FIRST MODEL EVALUATION:")
+                logger.info(f"  New Model R\u00b2: {trained_r2:.4f}")
+                logger.info("  Decision:     ACCEPTED [YES] (First model)")
+                logger.info("="*70 + "\n")
 
             # Step 5: Save best model if accepted
             logger.info("Step 5/5: Saving best model...")

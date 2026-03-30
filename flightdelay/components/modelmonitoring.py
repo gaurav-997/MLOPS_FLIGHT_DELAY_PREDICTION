@@ -16,7 +16,6 @@ Subsequently, `ModelMonitor` loads them on construction.
 """
 
 import os
-import sys
 import yaml
 import json
 import numpy as np
@@ -25,7 +24,6 @@ from typing import Dict, Optional
 from sklearn.metrics import r2_score, mean_absolute_error
 
 from flightdelay.logging.logger import logger
-from flightdelay.exception.exception import CustomException
 from flightdelay.utils.prometheus_utils import (
     model_drift_score,
     rolling_mae,
@@ -34,7 +32,7 @@ from flightdelay.utils.prometheus_utils import (
 )
 
 BASELINE_STATS_PATH = os.path.join("monitoring", "baseline_stats.yaml")
-FEEDBACK_CSV_PATH   = os.path.join("prediction_output", "feedback.csv")
+FEEDBACK_CSV_PATH = os.path.join("prediction_output", "feedback.csv")
 
 
 # ---------------------------------------------------------------------------
@@ -56,12 +54,12 @@ def _calculate_psi(expected: np.ndarray, actual: np.ndarray, bins: int = 10) -> 
         return 0.0
 
     expected_counts, _ = np.histogram(expected, bins=breakpoints)
-    actual_counts,   _ = np.histogram(actual,   bins=breakpoints)
+    actual_counts, _ = np.histogram(actual, bins=breakpoints)
 
     # Convert to proportions, clipping zeros to avoid log(0)
     eps = 1e-8
     expected_pct = np.clip(expected_counts / len(expected), eps, None)
-    actual_pct   = np.clip(actual_counts   / len(actual),   eps, None)
+    actual_pct = np.clip(actual_counts / len(actual), eps, None)
 
     psi = np.sum((actual_pct - expected_pct) * np.log(actual_pct / expected_pct))
     return float(psi)
@@ -226,10 +224,10 @@ class ModelMonitor:
             return False
 
         predictions = feedback_data["prediction"].values
-        actuals      = feedback_data["actual_delay"].values
+        actuals = feedback_data["actual_delay"].values
 
-        mae  = float(mean_absolute_error(actuals, predictions))
-        r2   = float(r2_score(actuals, predictions))
+        mae = float(mean_absolute_error(actuals, predictions))
+        r2 = float(r2_score(actuals, predictions))
 
         rolling_mae.set(mae)
         rolling_r2.set(r2)
@@ -278,9 +276,9 @@ class ModelMonitor:
             stats = self.baseline_stats["features"].get(feature)
             if not stats:
                 continue
-            low  = stats["mean"] - 3 * stats["std"]
+            low = stats["mean"] - 3 * stats["std"]
             high = stats["mean"] + 3 * stats["std"]
-            col  = df[feature].dropna()
+            col = df[feature].dropna()
             if len(col) == 0:
                 continue
             in_range = float(((col >= low) & (col <= high)).mean())

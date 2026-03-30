@@ -32,11 +32,7 @@ from flightdelay.utils.prometheus_utils import (
     predictions_total,
     prediction_latency,
     delay_class_predictions,
-    model_drift_score,
-    rolling_mae as prom_rolling_mae,
-    rolling_r2 as prom_rolling_r2,
     model_errors,
-    data_quality_score,
 )
 from flightdelay.components.modelmonitoring import ModelMonitor
 from flightdelay.pipeline.retraining_manager import RetrainingManager
@@ -113,9 +109,6 @@ class AlertWebhook(BaseModel):
     alertname: str = "unknown"
     reason: str = "drift_detected"
     severity: str = "warning"
-
-
-
 
 
 # ---------------------------------------------------------------------------

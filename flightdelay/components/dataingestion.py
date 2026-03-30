@@ -1,12 +1,13 @@
-﻿import pandas as pd
-from dotenv import load_dotenv
-import os
+﻿import os
 import sys
+
+import pandas as pd
 from flightdelay.logging.logger import logger
 from flightdelay.exception.exception import CustomException
 from flightdelay.entity.config_entity import DataIngestionConfig
 from flightdelay.entity.artifact_entity import DataIngestionArtifact
 from flightdelay.components.schema_validation import validate_all_schemas
+
 
 class DataIngestion:
     def __init__(self, data_ingestion_config: DataIngestionConfig):
@@ -109,7 +110,6 @@ class DataIngestion:
             )
             logger.info("Data ingestion completed successfully")
             return data_ingestion_artifact
-
 
         except Exception as e:
             logger.error(f"Data ingestion failed: {str(e)}")

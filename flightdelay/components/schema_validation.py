@@ -159,7 +159,7 @@ def validate_weather_schema(df: pd.DataFrame) -> bool:
     try:
         logger.info("Validating weather schema...")
 
-        required_columns = ["date","AWND", "TMAX", "TMIN", "PRCP"]
+        required_columns = ["date", "AWND", "TMAX", "TMIN", "PRCP"]
 
         missing_cols = [col for col in required_columns if col not in df.columns]
         if missing_cols:

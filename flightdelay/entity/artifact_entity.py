@@ -1,5 +1,6 @@
 ﻿from dataclasses import dataclass
 
+
 @dataclass
 class DataIngestionArtifact:
     ingested_flights_path: str
@@ -7,6 +8,8 @@ class DataIngestionArtifact:
     ingested_airlines_path: str
     ingested_holidays_path: str
     ingested_weather_path: str
+
+
 @dataclass
 class DataValidationArtifact:
     validated_flights_dir: str
@@ -17,6 +20,7 @@ class DataValidationArtifact:
     validated_weather_dir: str
     data_drift_report_path: str
 
+
 @dataclass
 class DataTransformationArtifact:
     transformed_object_file_path: str
@@ -24,12 +28,14 @@ class DataTransformationArtifact:
     transformed_test_file_path: str
     joined_data_file_path: str
 
+
 @dataclass
 class RegressionMetricArtifact:
     r2_score: float
     mae: float
     rmse: float
     mse: float
+
 
 @dataclass
 class ModelTrainerArtifact:
@@ -39,6 +45,7 @@ class ModelTrainerArtifact:
     best_model_name: str
     best_model_score: float
     mlflow_run_id: str = None
+
 
 @dataclass
 class ModelEvaluationArtifact:

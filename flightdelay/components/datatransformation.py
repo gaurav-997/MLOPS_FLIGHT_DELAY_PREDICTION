@@ -413,7 +413,7 @@ class DataTransformation:
             # Save preprocessor
             save_object(self.data_transformation_config.transformed_object_file_path, preprocessor)
             logger.info(f"Preprocessor saved: {self.data_transformation_config.transformed_object_file_path}")
-            print(f"  [PASS] Preprocessor saved")
+            print("  [PASS] Preprocessor saved")
 
             # Combine X and y for saving
             train_arr = np.c_[X_train_transformed, np.array(y_train)]
@@ -425,7 +425,7 @@ class DataTransformation:
 
             logger.info(f"Transformed train saved: {self.data_transformation_config.transformed_train_file_path}")
             logger.info(f"Transformed test saved: {self.data_transformation_config.transformed_test_file_path}")
-            print(f"  [PASS] Transformed data saved")
+            print("  [PASS] Transformed data saved")
 
             # Create artifact
             data_transformation_artifact = DataTransformationArtifact(

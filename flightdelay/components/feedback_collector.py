@@ -150,7 +150,7 @@ class FeedbackCollector:
     def label_coverage(self) -> dict:
         """Return counts of total vs labeled predictions."""
         with self._connect() as conn:
-            total   = conn.execute("SELECT COUNT(*) FROM feedback").fetchone()[0]
+            total = conn.execute("SELECT COUNT(*) FROM feedback").fetchone()[0]
             labeled = conn.execute(
                 "SELECT COUNT(*) FROM feedback WHERE actual_delay IS NOT NULL"
             ).fetchone()[0]

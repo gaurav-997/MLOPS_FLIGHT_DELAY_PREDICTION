@@ -87,7 +87,7 @@ class TrainingPipeline:
             )
             data_transformation_artifact = data_transformation.initiate_data_transformation()
 
-            logger.info(f"Data Transformation completed. Preprocessor saved.")
+            logger.info("Data Transformation completed. Preprocessor saved.")
             return data_transformation_artifact
 
         except Exception as e:

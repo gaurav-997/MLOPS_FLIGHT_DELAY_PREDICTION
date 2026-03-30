@@ -14,12 +14,10 @@ Usage:
 """
 
 import os
-import sys
 import subprocess
 import threading
 
 from flightdelay.logging.logger import logger
-from flightdelay.exception.exception import CustomException
 
 _retrain_lock = threading.Lock()
 

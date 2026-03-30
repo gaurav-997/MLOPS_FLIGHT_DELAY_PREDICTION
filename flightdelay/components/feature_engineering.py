@@ -43,7 +43,7 @@ class FeatureEngineering:
             # Quarter (Q1: Jan-Mar, Q2: Apr-Jun, Q3: Jul-Sep, Q4: Oct-Dec)
             if 'MONTH' in df.columns:
                 df['QUARTER'] = ((df['MONTH'] - 1) // 3 + 1).astype(int)
-                logger.info(f"  Created QUARTER feature (1-4)")
+                logger.info("  Created QUARTER feature (1-4)")
 
             logger.info("[PASS] Temporal features created")
             return df
@@ -87,7 +87,7 @@ class FeatureEngineering:
                     bins=[0, 500, 1000, 2000, 5000],
                     labels=['short', 'medium', 'long', 'ultra']
                 )
-                logger.info(f"  Created DISTANCE_BIN feature")
+                logger.info("  Created DISTANCE_BIN feature")
                 logger.info(f"    Distribution: {df['DISTANCE_BIN'].value_counts().to_dict()}")
 
             logger.info("[PASS] Derived features created")
@@ -237,7 +237,7 @@ class FeatureEngineering:
             new_features = final_cols - initial_cols
 
             logger.info("="*70)
-            logger.info(f"[PASS] FEATURE ENGINEERING COMPLETED")
+            logger.info("[PASS] FEATURE ENGINEERING COMPLETED")
             logger.info(f"Added {new_features} new features ({initial_cols} -> {final_cols})")
             logger.info("="*70)
 
