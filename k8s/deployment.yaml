@@ -1,0 +1,127 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flight-delay-api
+  namespace: flight-delay
+  labels:
+    app: flight-delay-api
+    version: "1.0"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flight-delay-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: flight-delay-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+      containers:
+        - name: api
+          image: <registry>/flight-delay-api:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: MLFLOW_TRACKING_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mlflow-secret
+                  key: tracking_uri
+            - name: MLFLOW_TRACKING_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mlflow-secret
+                  key: username
+            - name: MLFLOW_TRACKING_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlflow-secret
+                  key: password
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+          volumeMounts:
+            - name: model-data
+              mountPath: /app/final_model
+            - name: prediction-output
+              mountPath: /app/prediction_output
+      volumes:
+        - name: model-data
+          persistentVolumeClaim:
+            claimName: model-data-pvc
+        - name: prediction-output
+          persistentVolumeClaim:
+            claimName: prediction-output-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flight-delay-api
+  namespace: flight-delay
+  labels:
+    app: flight-delay-api
+spec:
+  type: ClusterIP
+  selector:
+    app: flight-delay-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+---
+# PersistentVolumeClaim for the production model artefacts
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-data-pvc
+  namespace: flight-delay
+spec:
+  accessModes: [ReadWriteMany]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prediction-output-pvc
+  namespace: flight-delay
+spec:
+  accessModes: [ReadWriteMany]
+  resources:
+    requests:
+      storage: 10Gi
