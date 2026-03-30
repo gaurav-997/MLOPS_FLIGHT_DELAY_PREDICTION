@@ -15,9 +15,7 @@ Run:
 """
 
 import os
-import sys
 import time
-import threading
 import io
 
 import pandas as pd
@@ -41,6 +39,8 @@ from flightdelay.utils.prometheus_utils import (
     data_quality_score,
 )
 from flightdelay.components.modelmonitoring import ModelMonitor
+from flightdelay.pipeline.retraining_manager import RetrainingManager
+from flightdelay.components.feedback_collector import FeedbackCollector
 
 # ---------------------------------------------------------------------------
 # App init
@@ -85,13 +85,17 @@ def _load_model() -> FlightDelayModel | None:
 
 
 monitor: ModelMonitor | None = None
+retrain_manager: RetrainingManager | None = None
+feedback_collector: FeedbackCollector | None = None
 
 
 @app.on_event("startup")
 def startup_event():
-    global network_model, monitor
+    global network_model, monitor, retrain_manager, feedback_collector
     network_model = _load_model()
     monitor = ModelMonitor()
+    retrain_manager = RetrainingManager()
+    feedback_collector = FeedbackCollector()
 
 
 # ---------------------------------------------------------------------------
@@ -111,32 +115,7 @@ class AlertWebhook(BaseModel):
     severity: str = "warning"
 
 
-# ---------------------------------------------------------------------------
-# Background retraining helper
-# ---------------------------------------------------------------------------
 
-_retrain_lock = threading.Lock()
-
-
-def _trigger_retraining(reason: str):
-    """Run training pipeline in a background thread (non-blocking)."""
-    if not _retrain_lock.acquire(blocking=False):
-        logger.info("Retraining already in progress — skipping duplicate trigger.")
-        return
-    try:
-        logger.info(f"Background retraining started. Reason: {reason}")
-        from training_pipeline import TrainingPipeline
-        pipeline = TrainingPipeline()
-        pipeline.run_pipeline()
-
-        # Reload production model after successful retrain
-        global network_model
-        network_model = _load_model()
-        logger.info("Background retraining completed; model reloaded.")
-    except Exception as exc:
-        logger.error(f"Background retraining failed: {exc}")
-    finally:
-        _retrain_lock.release()
 
 
 # ---------------------------------------------------------------------------
@@ -264,38 +243,45 @@ async def check_drift(file: UploadFile = File(...)):
 async def submit_feedback(feedback: FeedbackRequest):
     """
     Accept ground-truth feedback for a previous prediction.
-    Stores to prediction_output/feedback.csv for future drift analysis.
+    Persisted to SQLite via FeedbackCollector; also checks accuracy-drop trigger.
     """
     try:
-        row = {
-            "request_id": feedback.request_id,
-            "actual_delay": feedback.actual_delay,
-            "user_feedback": feedback.user_feedback,
-            "timestamp": time.time(),
-        }
-        feedback_path = os.path.join("prediction_output", "feedback.csv")
-        os.makedirs("prediction_output", exist_ok=True)
-
-        row_df = pd.DataFrame([row])
-        if os.path.exists(feedback_path):
-            row_df.to_csv(feedback_path, mode="a", header=False, index=False)
+        # Store in SQLite via FeedbackCollector
+        if feedback_collector:
+            feedback_collector.update_ground_truth(
+                request_id=feedback.request_id,
+                actual_delay=feedback.actual_delay,
+                user_feedback=feedback.user_feedback,
+            )
+            coverage = feedback_collector.label_coverage()
+            should_retrain = feedback_collector.should_trigger_retraining()
+            feedback_count = coverage["labeled"]
         else:
-            row_df.to_csv(feedback_path, index=False)
+            # Fallback: simple CSV append
+            row = {
+                "request_id": feedback.request_id,
+                "actual_delay": feedback.actual_delay,
+                "user_feedback": feedback.user_feedback,
+                "timestamp": time.time(),
+            }
+            feedback_path = os.path.join("prediction_output", "feedback.csv")
+            os.makedirs("prediction_output", exist_ok=True)
+            pd.DataFrame([row]).to_csv(
+                feedback_path, mode="a",
+                header=not os.path.exists(feedback_path),
+                index=False,
+            )
+            should_retrain = False
+            feedback_count = 0
 
-        feedback_df = pd.read_csv(feedback_path)
-
-        # Run accuracy-drop check via ModelMonitor
-        accuracy_drop = False
-        if monitor and "prediction" in feedback_df.columns:
-            accuracy_drop = monitor.check_accuracy_drop(feedback_df)
-
-        should_retrain = len(feedback_df) >= 100 or accuracy_drop
+        # Auto-trigger retraining in background if threshold exceeded
+        if should_retrain and retrain_manager:
+            retrain_manager.trigger_retraining_async(reason="accuracy_drop")
 
         return {
             "status": "success",
             "should_retrain": should_retrain,
-            "feedback_count": len(feedback_df),
-            "accuracy_drop": accuracy_drop,
+            "feedback_count": feedback_count,
         }
 
     except Exception as exc:
@@ -307,15 +293,11 @@ async def submit_feedback(feedback: FeedbackRequest):
 async def retrain_webhook(alert: AlertWebhook):
     """
     Webhook endpoint — triggered by Grafana / Prometheus alertmanager.
-    Spawns a background retraining job.
+    Spawns a background retraining job via RetrainingManager.
     """
     logger.info(f"Retrain webhook received: alertname={alert.alertname}, reason={alert.reason}")
-    thread = threading.Thread(
-        target=_trigger_retraining,
-        args=(alert.reason,),
-        daemon=True,
-    )
-    thread.start()
+    if retrain_manager:
+        retrain_manager.trigger_retraining_async(reason=alert.reason)
     return {"status": "retraining_initiated", "reason": alert.reason, "alertname": alert.alertname}
 
 
