@@ -1,0 +1,51 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: flight-delay-training
+  namespace: flight-delay
+spec:
+  schedule: "0 2 * * 0"   # run every Sunday 02:00 AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: trainer
+              image: <registry>/flight-delay-api:latest
+              command: ["docker-entrypoint.sh", "retrain"]
+              env:
+                - name: MLFLOW_TRACKING_URI
+                  valueFrom:
+                    secretKeyRef:
+                      name: mlflow-secret
+                      key: tracking_uri
+                - name: MLFLOW_TRACKING_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: mlflow-secret
+                      key: username
+                - name: MLFLOW_TRACKING_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: mlflow-secret
+                      key: password
+              resources:
+                requests:
+                  cpu: "4"
+                  memory: "16Gi"
+                limits:
+                  cpu: "8"
+                  memory: "32Gi"
+              volumeMounts:
+                - name: model-data
+                  mountPath: /app/final_model
+          volumes:
+            - name: model-data
+              persistentVolumeClaim:
+                claimName: model-data-pvc
